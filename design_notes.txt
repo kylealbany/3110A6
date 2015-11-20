@@ -1,0 +1,57 @@
+Our names: Kyle, Andy, Peter, Megan
+
+This meeting is to make sure we have the right design and that we aren't over/underachieving
+
+Design:
+  REPL
+  Enter word
+  Print board
+
+Division:
+  M+P - Board and gamestate (and AI when that's done)
+  K+A - AI
+
+Due:
+  December 3
+
+
+Board module is gonna be important
+Basically our design doc is cool and stuff
+
+raddix tree is better because it's actually meant for this, 2-3 tree is balanced but not useful for this
+
+
+AI-
+
+greedy algorithm is the best thing for AI to do
+  collect 10-100 words -> get score list -> select word
+    that's fine, but how are you gonna get the first 50 matches
+  better to look at board -> fix points where you wanna put the word, don't do the entire board
+    make a shitty AI that you can revert back to if you need to
+
+potential idea - smaller dictionary
+  instead -> limit search
+    more open sections, vowels, bonus spots
+    access # of leaves and select which raddix tree to use based on # of leaves (more possible words, limits # of trees needed to look through)
+  combine this with cutting off at first 100 and should be fine
+start with a dumb af AI that just puts down a word and then build from there
+  after-> cut at first 50 or 100 words and then pick max score of those
+try to see possible sections that could be desirable
+  rank them by desirability and then get a certain number of words for each section (50 for most, 30 for second, etc.)
+
+
+Dictionary-
+Use a 2-3 tree for dictionary for valid_word lookup bc it'll be a log n operation and you never have to re-insert
+So constructing might be bad but after that shouldn't be a problem
+Raddix tree is fine for dictionary as well
+
+
+
+Testing-
+board and repl going -> start just typing things and if word is invalid then flag also check that score updates
+  go off the board -> throws error
+AI -> make it find any valid word on very simple board
+    work up from there
+
+
+
