@@ -90,9 +90,9 @@ let update_board grid word coordinates direction =
   let (a',b') = ((int_of_char a)-65, b-1) in
   let wlist = to_char_list word in
   match direction with
-  | Down -> let new_cols = edit_index cols a' b' wlist in
+  | Down -> let new_cols = edit_index cols b' a' wlist in
         (transpose new_cols, new_cols)
-  | Across -> let new_rows = edit_index rows b' a' wlist in
+  | Across -> let new_rows = edit_index rows a' b' wlist in
         (new_rows, transpose new_rows)
 
 
