@@ -6,7 +6,7 @@ type move
 
 (* Returns random tiles at the beginning of the game and every time a word
    is played *)
-val gen_random_tiles : char list -> int -> char list option
+val gen_random_tiles : char list -> int -> char list * char list
 
 (* Returns player that has the highest score *)
 val get_winner :  player list -> player
