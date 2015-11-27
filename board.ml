@@ -9,12 +9,14 @@ type grid = rows * columns
 
 type direction = Down | Across
 
-
+(** INIT BOARD HELPERS **)
+(* Returns None is lst is empty and Some head element if lst is non-empty *)
 let safe_hd (lst: 'a list) : 'a option =
   match lst with
   | [] -> None
   | x::xs -> Some x
 
+(* Returns None is lst is empty and Some tail of the list if lst is non-empty *)
 let safe_tl (lst: 'a list) : 'a list option =
   match lst with
   | [] -> None
@@ -24,6 +26,7 @@ let safe_tl (lst: 'a list) : 'a list option =
  * colums are stored as rows
  *   -[mat] is a cell matrix repesenting the row or the column format of the
  *    board
+ *   -Code modeled after StackOverflow
  *)
 let rec transpose (mat: 'a list list) : 'a list list =
   match mat with
@@ -57,17 +60,26 @@ let init_board () =
     [row1;row2;row3;row4;row5;row6;row7;row8;row7;row6;row5;row4;row3;row2;row1]
   in
   (rows, transpose rows)
-(*   failwith "*drake and josh voice* Megan..." *)
 
-(* Code modeled after OCaml FAQ
- http://caml.inria.fr/pub/old_caml_site/FAQ/FAQ_EXPERT-eng.html#strings*)
-let to_char_list s =
+(** UPDATE BOARD HELPERS **)
+(* Converts an input string to a charater list
+ *    -[s] is a string
+ *    -Code modeled after OCaml FAQ
+ *     http://caml.inria.fr/pub/old_caml_site/FAQ/FAQ_EXPERT-eng.html#strings
+ *)
+let to_char_list (s: string) : char list =
   let rec exp i l =
     if i < 0 then l else exp (i - 1) (s.[i] :: l) in
   exp (String.length s - 1) []
 
-let rec edit_list lst n word =
-(*   let wlist = to_char_list word in *)
+(* Updates a row or column to include the character list, word, starting at
+ * index n
+ *    -[n] is the starting index of the word to insert. Must be between 0 and
+ *      the length of lst
+ *    -[lst] is the original row/column of the board
+ *    -[word] is the character list of the word to be inserted
+ *)
+let rec edit_list (lst:cell list) (n: int) (word: char list) : cell list =
   match lst with
   | [] -> []
   | x::xs -> if n = 0 then
@@ -79,10 +91,18 @@ let rec edit_list lst n word =
               new_x::edit_list xs n tl)
       else x::(edit_list xs (n-1) word)
 
-let rec edit_index lst m n word =
+(* Updates the board grid matrix to include the new word at coordinates (m,n)
+ *    -[lst] is the board grid matrix
+ *    -[n] is the row/column where the word should be inserted
+ *    -[m] id the offset within the nth row/column
+ *    -[word] is the char list of the word string to be inserted
+ *)
+let rec edit_index (lst: cell list list) (m: int) (n: int) (word: char list) :
+cell list list =
   match lst with
   | [] -> []
-  | x::xs -> (if n = 0 then edit_list x m word else x)::edit_index xs m (n-1) word
+  | x::xs ->
+      (if n = 0 then edit_list x m word else x)::edit_index xs m (n-1) word
 
 let update_board grid word coordinates direction =
   let (rows, cols) = grid in
@@ -96,7 +116,11 @@ let update_board grid word coordinates direction =
         (new_rows, transpose new_rows)
 
 
-
+(* Returns the type of the cell to be printed on the board. TW represents triple
+ * word tiles. DW represent double word tiles. TL represent triple letter tiles.
+ * DL represented double letter tiles.
+ *    -[c] is the cell we wish to get the type of
+ *)
 let get_type (c: cell) : string =
   match c.letter_mult, c.word_mult, c.letter with
   | 1, 3, None -> "| TW "
@@ -108,18 +132,24 @@ let get_type (c: cell) : string =
   | 1, 1, Some a -> "| "^ (Char.escaped a) ^"  "
   | _, _, _ -> failwith "Not valid tile"
 
-
-
+(* Builds the rows of the board with the respective multipliers and characters
+ *    -[row] is the current row of the board we are generating
+ *)
 let rec build_row (row: cell list) : string =
   match row with
   | [] -> "|"
   | x::xs -> (get_type x) ^ (build_row xs)
 
+(* Generates the entire board by concatenating each row's values and their
+ * borders
+ *    -[rows] the row major form of the board grid
+ *    -[n] is the current row number
+ *)
 let rec by_row (rows: cell list list) (n:int) : string =
   let underline = ("\n    +----+----+----+----+----+----+----+----+----+----+" ^
     "----+----+----+----+----+\n") in
-  let endline = ("\n    +====+====+====+====+====+====+====+====+====+====+====+" ^
-      "====+====+====+====+\n") in
+  let endline = ("\n    +====+====+====+====+====+====+====+====+====+====+" ^
+      "====+====+====+====+====+\n") in
   match rows with
   | [] -> ""
   | x::[] -> " " ^ (string_of_int n) ^ (if n < 10 then " " else "") ^  " " ^
@@ -129,17 +159,9 @@ let rec by_row (rows: cell list list) (n:int) : string =
 
 
 let print_board grid =
-  let border = ("\n      A    B    C    D    E    F    G    H    I    J    K    L "^
-    "   M    N    O\n    +====+====+====+====+====+====+====+====+====+====+====+"^
-    "====+====+====+====+\n") in
+  let border = ("\n      A    B    C    D    E    F    G    H    I    J    K" ^
+    "    L    M    N    O\n    +====+====+====+====+====+====+====+====+====+" ^
+    "====+====+====+====+====+====+\n") in
   let (rows,cols) = grid in
   let scrabble = by_row rows 1 in
   print_string (border ^ scrabble)
-
-
-
-
-
-
-
-
