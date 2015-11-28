@@ -1,8 +1,9 @@
-type rows
-type columns
-type cell
-type grid
-type direction
+
+type cell = {letter_mult : int; word_mult : int; letter : char option}
+type rows = cell list list
+type columns = cell list list
+type grid = rows * columns
+type direction = Down | Across
 
 
 (* Creates board with cells that only contain respective multipliers *)
