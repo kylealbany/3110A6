@@ -2,19 +2,9 @@ open RadixTree
 
 type key = string
 type value = string
-type dict = PString
-
+type dict = string PString.t
 
 let empty = PString.empty
-let mymap1 = PString.add "t1" "test1" empty
-let mymap2 = PString.add "t2" "test2" mymap1
-let mymap3 = PString.add "t3" "test3" mymap2
-
-let t1_in = PString.find "t1" mymap1
-
-(* should cause exception *)
-(* let t1_in_any = PString.find "t4" mymap3 *)
-
 
 let lookup dict key =
   try
@@ -22,9 +12,17 @@ let lookup dict key =
   with
       Not_found -> None
 
+let member dict value =
+  try
+    let _ = PString.find value dict in true
+  with
+      Not_found -> false
 
-let member dict key =
-  failwith "unimplemented"
-
+(* currently doesn't support overwriting an existing key's value *)
 let insert dict key value =
-  failwith "unimplemented"
+  let present = member dict value in
+  match present with
+  | false -> let new_map = PString.add key value dict in new_map
+  | true -> (* let _ = PString.remove key dict in *)
+            let new_map = PString.add key value dict in new_map
+
