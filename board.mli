@@ -5,6 +5,14 @@ type columns = cell list list
 type grid = rows * columns
 type direction = Down | Across
 
+(* Returns the head of a list if the list is nonempty and None otherwise *)
+val safe_hd : 'a list -> 'a option
+
+(* Returns the tail of a list if the list is nonempty and None otherwise *)
+val safe_tl : 'a list -> 'a list option
+
+(* Returns the transpose of an 'a list list *)
+val transpose : 'a list list -> 'a list list
 
 (* Creates board with cells that only contain respective multipliers *)
 val init_board : unit ->  rows * columns
