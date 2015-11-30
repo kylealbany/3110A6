@@ -1,5 +1,3 @@
-
-
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
  * if we need lines we can rewrite ourselves
@@ -43,11 +41,6 @@ let permutation s =
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
-let get_valid_words dict chars =
-  let strings = permutation chars in
-  (* Change search_limit to increase AI difficulty*)
-  let search_limit = 10 in
-  get_i_words dict strings search_limit 0
 
 let rec get_i_words dict strings (max : int) (i : int)  =
   if i = max then [] else
@@ -55,6 +48,88 @@ let rec get_i_words dict strings (max : int) (i : int)  =
   | [] -> []
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
               else get_i_words dict tl max i
+
+let get_valid_words dict chars =
+  let strings = permutation chars in
+  (* Change search_limit to increase AI difficulty*)
+  let search_limit = 10 in
+  get_i_words dict strings search_limit 0
+
+
+
+(* return the char at letter at index [n] in [line] which is a list of tiles *)
+let rec get_nth_letter line n =
+  match n with
+  | 0 -> (List.hd line).letter (* board is always 15*15 so List.hd is safe *)
+  | _ -> begin match line with
+         | [] -> None
+         | hd::tl-> get_nth_letter tl (n-1)
+         end
+
+(* return the number of open tiles before first occupied tile in [line]*)
+let space_above line =
+  let rec helper l count =
+    match l with
+    | [] -> count
+    | hd::tl -> if hd.letter = None then helper tl (count + 1) else count
+  in helper line 0
+
+(* return the number of open tiles after the last occupied tile in [line] *)
+let space_below line =
+  space_above (List.rev line)
+
+
+(* given a tile list [tiles] return a list of each tiles letters as bytes *)
+let filter_tiles tiles =
+  let l = List.map (fun t -> t.letter) tiles in
+  let no_none =  List.filter
+  (fun t -> match t with | Some _ -> true | _ -> false) l in
+   List.map
+  (fun t -> match t with | Some x -> x | _ -> failwith "error filter") no_none
+
+(* [tiles] is AI's current rack of tiles, [line] is one row or col in a grid
+ * returns a list of playable words
+ * assuming the last letter in line is isolated
+ * i.e _ _ _ e _ would allow 4 letter words that end in e *)
+let try_above dict tiles line =
+  let max_len = space_above line in
+  let last_letter = match (get_nth_letter line max_len) with
+                      | Some x -> x
+                      | None -> failwith "outside board"
+    in
+  let after_last_empty = match (get_nth_letter line (max_len + 1)) with
+                      | Some x -> false
+                      | None -> true
+    in
+  (* if space available above and last tile is isolated return words that fit*)
+  if (after_last_empty && max_len > 0) then
+    let choices = get_valid_words dict (last_letter::(filter_tiles tiles)) in
+    List.filter
+      (fun x -> (String.length x <= (max_len +1))
+      && (x.[(String.length x) -1] = last_letter)) choices
+  else []
+
+let try_below dict tiles line =
+  let max_len = space_below line in
+  let index = (List.length line) - max_len -1 in
+  let first_letter = match (get_nth_letter line index) with
+                      | Some x -> x
+                      | None -> failwith "outside board"
+    in
+  let before_first_empty = match (get_nth_letter line (index - 1)) with
+                      | Some x -> false
+                      | None -> true
+    in
+  (* if space available below and first tile is isolated return words that fit*)
+  if (before_first_empty && max_len > 0) then
+    let choices = get_valid_words dict (first_letter::(filter_tiles tiles)) in
+    List.filter
+      (fun x -> (String.length x <= (max_len+1))
+      && (x.[0] = first_letter)) choices
+  else []
+
+
+
 
 let gen_word_list game = failwith "unimplimented"
 (*   let tiles = game.tiles in
