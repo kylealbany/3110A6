@@ -42,11 +42,14 @@ let permutation s =
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
+let get_valid_words (chars : char list) =
+  let strings = permutation chars in
+  List.iter print_endline strings
+
 
 let gen_word_list game = failwith "unimplimented"
 (*   let tiles = game.tiles in
   let perms = permutation tiles in *)
-
 
 let choose_word movelist =
   failwith "Kyle's a dick"
