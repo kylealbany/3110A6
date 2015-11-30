@@ -1,4 +1,7 @@
-module type AI = sig
+open Gamestate
+open Board
+
+
 
   (* Generates a list of possible words based on the current board
      and the AI’s rack *)
@@ -13,5 +16,5 @@ module type AI = sig
   (* returns string of tiles AI wants to exchange *)
   val exchange_tiles : game -> string
 
-end
+
 

@@ -1,4 +1,3 @@
-
 type player
 type coordinate
 type game
