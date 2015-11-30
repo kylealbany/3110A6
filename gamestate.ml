@@ -1,5 +1,5 @@
 open String
-(* open Board *)
+open Board
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
@@ -188,6 +188,7 @@ let find_assoc_index lst index =
     | h::t -> if h.letter = None then (15-i) else helper t (i+1)
   in helper (nth_and_tail (List.rev lst) (15-index)) (15-index)
 
+
 let find_assoc_rindex lst index =
   let rec helper wrd i =
     match wrd with
@@ -259,6 +260,22 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int) =
       new_s:: update_cell_list cs ss n
       else s:: update_cell_list (c::cs) ss (n-1)
   | _, [] -> failwith "Invalid character insertion"
+
+
+(* Check associated list with a letter in the word being played,
+if the length of that associated list is > 1, then score it and add it to the total
+score
+    -[n] is the index of the cell list
+    -[score] is accumlated associated word score*)
+let get_assoc_score (clist: cell list) (n: int) =
+  let assoc = find_assoc_clist clist n in
+  let assoc_start = find_assoc_index clist n in
+  if List.length assoc > 1
+    then let word_score, word_mult = score_main assoc (nth_and_tail clist assoc_start) in
+          word_score * word_mult
+    else 0
+
+
 (* let check_for_para para_i_list adj_lines *)
 
 (*
@@ -296,8 +313,22 @@ let word_score (board: game) (turn: move) : int =
     exten_total * exten_mult
   else fst played_score * snd played_score in
   (* Adjacent score calculating logic *)
-  let adj_lines = if dir = Down then get_adj columns line_num else get_adj rows line_num in
-  new_played_score
+  (* let adj_lines = if dir = Down then get_adj columns line_num else get_adj rows line_num in*)
+  let rec helper line_list n =
+  match line_list with
+  | [] -> 0
+  | h::t -> get_assoc_score h n + helper t n
+  in
+  let perp_lines =
+  (if dir = Down then
+      let new_cols = set assoc_cell_list line_num columns in
+      sub line_num (line_num + (List.length wlist)) (transpose new_cols)
+    else
+      let new_rows = set assoc_cell_list line_num rows in
+      sub line_num (line_num + (List.length wlist)) (transpose new_rows))
+  in
+  let adj_score = helper perp_lines line_num in
+  new_played_score + adj_score
 
 
 (* Filters the game mode to return Single if its single player mode (1 player
