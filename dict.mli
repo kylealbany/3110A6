@@ -12,3 +12,7 @@ val member : dict -> key -> bool
    in our dictionary, update the key to have the new value. *)
 val insert : dict -> key -> dict
 
+
+(* Builds a radix tree dictionary when given the file name of a dictionary file
+   as input. The file should be formatted as one word per line with nothing else *)
+val init : string -> dict

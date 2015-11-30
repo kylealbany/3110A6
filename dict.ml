@@ -20,3 +20,5 @@ let insert dict key  =
   | true -> (* let _ = PString.remove key dict in *)
             let new_map = PString.add key () dict in new_map
 
+let init fname =
+  failwith "unimplemented"
