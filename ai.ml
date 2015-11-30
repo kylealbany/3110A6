@@ -68,8 +68,9 @@ let rec get_i_words dict strings (max : int) (i : int)  =
    with the highest score. Does not take into account board multipliers, wildcard
    tiles, or other connecting words. Can improve it to increase AI difficulty *)
 let rec choose_best_word words =
+  let score_ref = ref 0 in
   let get_word_score word =
-    let score = ref 0 in
+  (score_ref := 0);
     let get_char_score character =
       match character with
       | 'a' -> score_ref := !score_ref + 1
