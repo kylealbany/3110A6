@@ -24,14 +24,22 @@ let distribute c l =
   in helper s [] *)
 
 (* accepts a byte list and returns a (byte list) list containing the permutations *)
-  let rec permutation = function
-    | [] -> [[]]
-    | hd::tl -> List.fold_left (fun acc x -> List.rev_append (distribute hd x) acc)
-      [] (permutation tl)
+let rec permutation = function
+  | [] -> [[]]
+  | hd::tl -> List.fold_left (fun acc x -> List.rev_append (distribute hd x) acc)
+    [] (permutation tl)
+
+let get_valid_words (chars : char list) =
+  let strings = permutation chars in
+  List.iter print_endline strings
+
+
 
 let gen_word_list game = failwith "un"
 (*   let tiles = game.tiles in
   let perms = permutation tiles in *)
+
+
 
 
 let choose_word movelist =
