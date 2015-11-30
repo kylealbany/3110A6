@@ -1,5 +1,5 @@
 open String
-open Board
+(* open Board *)
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
@@ -196,6 +196,7 @@ let find_assoc_rindex lst index =
   in (helper (nth_and_tail lst index) 0)+index-1
 (*   14 - (find_assoc_index (List.rev lst) (15-index)) *)
 
+(* Takes in full line and index of known letter in the word *)
 let find_assoc_clist cell_list index =
   let sub = nth_and_tail cell_list index in
   let rec helper lst =
@@ -261,7 +262,7 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int) =
 (* let check_for_para para_i_list adj_lines *)
 
 (*
-Get adjacent lines to the main line the word is played on
+XGet adjacent lines to the main line the word is played on
 Cut those to only consider cells actually adjacent to the word played
 Check each of those sublines for letters
   -> no letters -> return score
@@ -277,10 +278,10 @@ let word_score (board: game) (turn: move) : int =
   let word, dir, coordinates = turn in
   let subl = get_subline board coordinates dir in
   let wlist = to_char_list word in
-(*   let rows, columns = board in *)
+  let rows, columns = board in
 (*   let para_lines = if dir = Down then columns else rows in *)
-  let start_index = if dir = Down then (snd coordinates)-1
-  else (int_of_char (fst coordinates))-65 in
+  let start_index, line_num = if dir = Down then (snd coordinates)-1, (int_of_char (fst coordinates))-65
+  else (int_of_char (fst coordinates))-65, (snd coordinates)-1 in
 (*   let adj_lines = if dir = Down then rows else columns in *)
   let played_score = score_main wlist (get_subline board coordinates dir) in
   (* Check if word played is a prefix or suffix of existing word *)
@@ -294,6 +295,8 @@ let word_score (board: game) (turn: move) : int =
     let (exten_total, exten_mult) = score_main (find_assoc_clist assoc_cell_list exten_start) subl in
     exten_total * exten_mult
   else fst played_score * snd played_score in
+  (* Adjacent score calculating logic *)
+  let adj_lines = if dir = Down then get_adj columns line_num else get_adj rows line_num in
   new_played_score
 
 
