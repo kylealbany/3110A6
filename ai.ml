@@ -43,11 +43,17 @@ let permutation s =
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
+let string_compare_helper s1 s2 =
+  if (s1 = s2) then 0
+  else if (s1 < s2) then -1
+  else 1
+
 let get_valid_words dict chars =
   let strings = permutation chars in
   (* Change search_limit to increase AI difficulty*)
   let search_limit = 10 in
-  get_i_words dict strings search_limit 0
+  let words = get_i_words dict strings search_limit 0 in
+  List.sort_uniq string_compare_helper words
 
 let rec get_i_words dict strings (max : int) (i : int)  =
   if i = max then [] else
@@ -55,6 +61,7 @@ let rec get_i_words dict strings (max : int) (i : int)  =
   | [] -> []
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
               else get_i_words dict tl max i
+
 
 let gen_word_list game = failwith "unimplimented"
 (*   let tiles = game.tiles in
