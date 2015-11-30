@@ -21,4 +21,12 @@ let insert dict key  =
             let new_map = PString.add key () dict in new_map
 
 let init fname =
-  failwith "unimplemented"
+  let dict = ref empty in
+  let file = open_in fname in
+  try
+    while true; do
+      dict := insert !dict (input_line file)
+    done; !dict
+  with End_of_file ->
+    close_in file;
+    !dict
