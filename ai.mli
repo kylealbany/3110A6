@@ -1,6 +1,3 @@
-open Gamestate
-open Board
-
 
 
   (* Generates a list of possible words based on the current board

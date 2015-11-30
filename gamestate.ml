@@ -1,4 +1,3 @@
-open Board
 open String
 
 type player = {name: string; mutable score: int; isCPU: bool}

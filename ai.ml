@@ -1,6 +1,3 @@
-open Board
-open Gamestate
-open Dict
 
 
 (* distribute and permutation modified from
@@ -46,18 +43,18 @@ let permutation s =
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
-let get_valid_words (chars : char list) dict =
+let get_valid_words dict chars =
   let strings = permutation chars in
-  List.iter print_endline strings
+  (* Change search_limit to increase AI difficulty*)
+  let search_limit = 10 in
+  get_i_words dict strings search_limit 0
 
-let rec get_i_words dict (strings : string list) (max : int) (i : int)  =
-  match i with
-  | max -> []
-  | _ -> begin match strings with
-         | [] -> []
-         | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
-                     else get_i_words dict tl max i
-        end
+let rec get_i_words dict strings (max : int) (i : int)  =
+  if i = max then [] else
+  match strings with
+  | [] -> []
+  | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
+              else get_i_words dict tl max i
 
 let gen_word_list game = failwith "unimplimented"
 (*   let tiles = game.tiles in
