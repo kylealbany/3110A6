@@ -1,5 +1,6 @@
 open Board
 open Gamestate
+open Dict
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -29,10 +30,18 @@ let rec permutation = function
   | hd::tl -> List.fold_left (fun acc x -> List.rev_append (distribute hd x) acc)
     [] (permutation tl)
 
-let get_valid_words (chars : char list) =
+let get_valid_words (chars : char list) dict =
   let strings = permutation chars in
   List.iter print_endline strings
 
+let rec get_i_words dict (strings : string list) (max : int) (i : int)  =
+  match i with
+  | max -> []
+  | _ -> begin match strings with
+         | [] -> []
+         | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
+                     else get_i_words dict tl max i
+        end
 
 
 let gen_word_list game = failwith "un"
