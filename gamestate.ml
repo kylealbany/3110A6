@@ -1,5 +1,5 @@
 open String
-open Board
+(* open Board *)
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
@@ -197,7 +197,7 @@ let find_assoc_rindex lst index =
   in (helper (nth_and_tail lst index) 0)+index-1
 (*   14 - (find_assoc_index (List.rev lst) (15-index)) *)
 
-(* Takes in full line and index of known letter in the word *)
+(* Takes in full line and index of the first letter in the word *)
 let find_assoc_clist cell_list index =
   let sub = nth_and_tail cell_list index in
   let rec helper lst =
@@ -268,8 +268,8 @@ score
     -[n] is the index of the cell list
     -[score] is accumlated associated word score*)
 let get_assoc_score (clist: cell list) (n: int) =
-  let assoc = find_assoc_clist clist n in
   let assoc_start = find_assoc_index clist n in
+  let assoc = find_assoc_clist clist assoc_start in
   if List.length assoc > 1
     then let word_score, word_mult = score_main assoc (nth_and_tail clist assoc_start) in
           word_score * word_mult
@@ -322,10 +322,10 @@ let word_score (board: game) (turn: move) : int =
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num columns in
-      sub line_num (line_num + (List.length wlist)) (transpose new_cols)
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_cols)
     else
       let new_rows = set assoc_cell_list line_num rows in
-      sub line_num (line_num + (List.length wlist)) (transpose new_rows))
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let adj_score = helper perp_lines line_num in
   new_played_score + adj_score
