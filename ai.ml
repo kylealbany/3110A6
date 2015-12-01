@@ -8,18 +8,6 @@ let distribute c l =
     | hd::tl -> insert (hd::acc1)((List.rev_append acc1 (hd::c::tl))::acc2) tl
   in insert [] [c::l] l
 
-(* accepts a string, returns a byte array *)
-(* let to_array s  =
-  let rec helper s a =
-    match s with
-    | "" -> []
-    | x ->
-      let l = (Bytes.length x) -1 in
-      let ch = Bytes.get x l in
-      let subs = Bytes.sub x 0 (l-1) in
-      helper subs (ch::a)
-  in helper s [] *)
-
 (* Takes in bytes list s, and integer n. Removes random elements from s until
    it only contains n elements.*)
 let rec remove_chars s n =
@@ -32,6 +20,13 @@ let rec remove_chars s n =
     | hd::tl -> if i = index then tl else hd::(remove_char tl index (i+1))
   in
   remove_chars (remove_char s index 0) n
+
+(* Replace wildcards in char list chars with character *)
+let rec replace_wildcards chars character =
+  match chars with
+  | [] -> []
+  | hd::tl -> if hd = '*' then character::(replace_wildcards tl character)
+              else hd::(replace_wildcards tl character)
 
 (* convert a bytes list to a string *)
 let blist_to_string b =
@@ -65,6 +60,8 @@ let string_compare_helper s1 s2 =
   else if (s1 < s2) then -1
   else 1
 
+(* Given a list of tiles, finds a subset of length n and finds valid words from
+  all of the permutations of that subset*)
 let get_valid_words dict chars n =
   let strings = permutation chars n in
   (* Change search_limit to increase AI difficulty*)
@@ -79,6 +76,96 @@ let rec get_i_words dict strings (max : int) (i : int)  =
   | [] -> []
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
               else get_i_words dict tl max i
+
+
+(* Gets the score of an individual word, not taking the board of wildcareds into
+   account at all. *)
+let get_word_score word =
+    let score_ref = ref 0 in
+    (score_ref := 0);
+    let get_char_score character =
+      match character with
+      | 'a' -> score_ref := !score_ref + 1
+      | 'b' -> score_ref := !score_ref + 3
+      | 'c' -> score_ref := !score_ref + 3
+      | 'd' -> score_ref := !score_ref + 2
+      | 'e' -> score_ref := !score_ref + 1
+      | 'f' -> score_ref := !score_ref + 4
+      | 'g' -> score_ref := !score_ref + 2
+      | 'h' -> score_ref := !score_ref + 4
+      | 'i' -> score_ref := !score_ref + 1
+      | 'j' -> score_ref := !score_ref + 8
+      | 'k' -> score_ref := !score_ref + 5
+      | 'l' -> score_ref := !score_ref + 1
+      | 'm' -> score_ref := !score_ref + 3
+      | 'n' -> score_ref := !score_ref + 1
+      | 'o' -> score_ref := !score_ref + 1
+      | 'p' -> score_ref := !score_ref + 3
+      | 'q' -> score_ref := !score_ref + 10
+      | 'r' -> score_ref := !score_ref + 1
+      | 's' -> score_ref := !score_ref + 1
+      | 't' -> score_ref := !score_ref + 1
+      | 'u' -> score_ref := !score_ref + 1
+      | 'v' -> score_ref := !score_ref + 4
+      | 'w' -> score_ref := !score_ref + 4
+      | 'x' -> score_ref := !score_ref + 8
+      | 'y' -> score_ref := !score_ref + 4
+      | 'z' -> score_ref := !score_ref + 10
+      | _ -> failwith "Invalid character encountered in Ai.choose_best_word"
+    in
+    (String.iter get_char_score word); !score_ref
+
+let compare_score word1 word2 =
+  let score1 = get_word_score word1 in
+  let score2 = get_word_score word2 in
+  if score1 >= score2 then
+    if score1=score2 then 0 else -1
+  else 1
+
+(* Simple function to choose the best word to play. Uses the tile values to
+   come up with a score for each playable word, and then will return the word
+   with the highest score. Does not take into account board multipliers, wildcard
+   tiles, or other connecting words. Can improve it to increase AI difficulty *)
+let rec choose_best_word words =
+  let max_score = ref 0 in
+  let best_word = ref "" in
+  let rec find_best words =
+    match words with
+    | [] -> !best_word
+    | hd::tl -> let score = (get_word_score hd) in
+                if score < !max_score then find_best tl
+                else ((max_score := score); (best_word := hd); (find_best tl))
+    in
+  find_best words
+
+(* Given available chars, try many different subsets of them of different lengths
+  and accumulate all of the playable words that are found.
+ Increasing the upper limits of x for the loops can increase difficulty*)
+let try_tile_subsets dict chars=
+  let possible_words = ref [] in
+  (* Max length is 8, higher gives stack overflow finding permutations *)
+  for x = 0 to 2 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 8))
+  done;
+  for x = 0 to 4 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 7))
+  done;
+  for x = 0 to 8 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 6))
+  done;
+  for x = 0 to 16 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 5))
+  done;
+  for x = 0 to 32 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 4))
+  done;
+  for x = 0 to 64 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 3))
+  done;
+  for x = 0 to 128 do
+    (possible_words := !possible_words @ (get_valid_words dict chars 2))
+  done;
+  List.sort_uniq compare_score !possible_words
 
 
 (* return the char at letter at index [n] in [line] which is a list of tiles *)
@@ -137,7 +224,7 @@ let try_above dict tiles line n =
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
-let try_below dict tiles line n  =
+let try_below dict tiles line n =
   let line = List.rev line in
   let max_len = space_above line in
   let first_letter = match (get_nth_letter line max_len) with
@@ -157,79 +244,6 @@ let try_below dict tiles line n  =
      in (filtered,max_len)
   else ([],-1)
 
-(* let try_below dict tiles line =
-  let max_len = space_below line in
-  let index = (List.length line) - max_len -1 in
-  let first_letter = match (get_nth_letter line index) with
-                      | Some x -> x
-                      | None -> failwith "outside board"
-    in
-  let before_first_empty = match (get_nth_letter line (index - 1)) with
-                      | Some x -> false
-                      | None -> true
-    in
-  (* if space available below and first tile is isolated return words that fit*)
-  if (before_first_empty && max_len > 0) then
-    let choices = get_valid_words dict (first_letter::(filter_tiles tiles)) in
-    List.filter
-      (fun x -> (String.length x <= (max_len+1))
-      && (x.[0] = first_letter)) choices
-  else [] *)
-
-(* Simple function to choose the best word to play. Uses the tile values to
-   come up with a score for each playable word, and then will return the word
-   with the highest score. Does not take into account board multipliers, wildcard
-   tiles, or other connecting words. Can improve it to increase AI difficulty *)
-let rec choose_best_word words =
-  let score_ref = ref 0 in
-  let get_word_score word =
-  (score_ref := 0);
-    let get_char_score character =
-      match character with
-      | 'a' -> score_ref := !score_ref + 1
-      | 'b' -> score_ref := !score_ref + 3
-      | 'c' -> score_ref := !score_ref + 3
-      | 'd' -> score_ref := !score_ref + 2
-      | 'e' -> score_ref := !score_ref + 1
-      | 'f' -> score_ref := !score_ref + 4
-      | 'g' -> score_ref := !score_ref + 2
-      | 'h' -> score_ref := !score_ref + 4
-      | 'i' -> score_ref := !score_ref + 1
-      | 'j' -> score_ref := !score_ref + 8
-      | 'k' -> score_ref := !score_ref + 5
-      | 'l' -> score_ref := !score_ref + 1
-      | 'm' -> score_ref := !score_ref + 3
-      | 'n' -> score_ref := !score_ref + 1
-      | 'o' -> score_ref := !score_ref + 1
-      | 'p' -> score_ref := !score_ref + 3
-      | 'q' -> score_ref := !score_ref + 10
-      | 'r' -> score_ref := !score_ref + 1
-      | 's' -> score_ref := !score_ref + 1
-      | 't' -> score_ref := !score_ref + 1
-      | 'u' -> score_ref := !score_ref + 1
-      | 'v' -> score_ref := !score_ref + 4
-      | 'w' -> score_ref := !score_ref + 4
-      | 'x' -> score_ref := !score_ref + 8
-      | 'y' -> score_ref := !score_ref + 4
-      | 'z' -> score_ref := !score_ref + 10
-      | _ -> failwith "Invalid character encountered in Ai.choose_best_word"
-    in
-    (String.iter get_char_score word); !score_ref
-  in
-  let max_score = ref 0 in
-  let best_word = ref "" in
-  let rec find_best words =
-    match words with
-    | [] -> !best_word
-    | hd::tl -> let score = (get_word_score hd) in
-                if score < !max_score then find_best tl
-                else ((max_score := score); (best_word := hd); (find_best tl))
-    in
-  find_best words
-
-
-
-(* words (wordslist, col_index ) *)
 let gen_down_move words row_index dir =
   let word_list = fst words in
   let col_letter = char_of_int (snd words + 65) in
@@ -242,8 +256,6 @@ let gen_above_move words row_index dir =
   let col_letter = char_of_int (snd words + 65) in
   let f x = let cord = (col_letter,row_index - ((String.length x) -1)) in (x,dir,cord) in
     List.map f word_list
-
-
 
 (* [ai] is a player
  * [game] is a grid of cols and rows
