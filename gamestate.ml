@@ -62,7 +62,7 @@ player list * char list =
 (* Creates a string of the player's tile to be printed out
  *    -[playr] is the player whose tiles are to be displayed (whose turn it is)
  *)
-(*TODO*)let print_player_tiles (playr: player) : string =
+let print_player_tiles (playr: player) : string =
   let clist = playr.rack in
   let n = List.length clist in
   let rec create_border (n: int) (s1: string) (s2: string) =
@@ -77,7 +77,7 @@ player list * char list =
 (* Returns a list of the player's tiles in a randomized order
  *    -[playr] is the player whose tiles are to be shuffled
  *)
-(*TODO*)let shuffle_player_tiles (playr: player) : char list =
+let shuffle_player_tiles (playr: player) : char list =
   let clist = playr.rack in
   let rec shuffle_help (lst: char list) =
     match lst with
@@ -105,20 +105,9 @@ let rec main (board: game) : unit =
   failwith "no"
 
 
-(** UPDATE BOARD HELPERS **)
-(* Converts an input string to a charater list
- *    -[s] is a string
- *    -Code modeled after OCaml FAQ
- *     http://caml.inria.fr/pub/old_caml_site/FAQ/FAQ_EXPERT-eng.html#strings
- *)
-let to_char_list (s: string) : char list =
-  let rec exp i l =
-    if i < 0 then l else exp (i - 1) (s.[i] :: l) in
-  exp (String.length s - 1) []
-
-
-
+(******************************************************************************)
 (* WORD SCORE HELPERS *********************************************************)
+(******************************************************************************)
 
 (* Returns the offical tile score of the character
  *    -[c] is a capitalized char of the standard alphabet or '*' if it
@@ -375,8 +364,9 @@ let word_score (board: game) (turn: move) : int =
   new_played_score + adj_score + bingo_bonus
 
 
-
+(******************************************************************************)
 (* MAIN HELPERS ***************************************************************)
+(******************************************************************************)
 
 (* Filters the game mode to return Single if its single player mode (1 player
  * v. the AI), Multi if its multiplayer mode (no AI), or Other if the command

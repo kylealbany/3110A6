@@ -14,6 +14,9 @@ val safe_tl : 'a list -> 'a list option
 (* Returns the transpose of an 'a list list *)
 val transpose : 'a list list -> 'a list list
 
+(* Returns a character list of a string *)
+val to_char_list : string -> char list
+
 (* Creates board with cells that only contain respective multipliers *)
 val init_board : unit ->  rows * columns
 
