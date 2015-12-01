@@ -588,13 +588,24 @@ let rec get_names (n: int) (m: int): string list =
   print_string ("Hi " ^ filter_name);
   filter_name :: (get_names (n-1) (m+1))
 
-(* Returns the winner of the game
- *    -[plist] the list of players in the game
- *)
+(* See gamestate.ml *)
 let get_winner (plist: player list) : player =
   match safe_hd plist with
   | None -> failwith "No players initialized"
   | Some p -> List.fold_right (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p
+
+
+(* See gamestate.mli *)
+let exchange (rack: char list) (tiles: string) (bag: char list) : char list * char list =
+  let tile_list = to_char_list tiles in
+  let num_tiles = List.length tile_list in
+  let rec remove_from_rack (r: char list) (t: char list) =
+    match t with
+    | [] -> r
+    | x::xs -> remove_from_rack (remove_elt r x) xs in
+  let new_rack = remove_from_rack rack tile_list in
+  let (new_bag, new_tiles) = gen_random_tiles (bag @ tile_list) num_tiles in
+  (new_rack @ new_tiles, new_bag)
 
 (* Determines the mode the player wishes to use and generates a list of players
  *)
