@@ -500,15 +500,17 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num cols in
+      print_string ("length of new_cols is "^string_of_int (List.length new_cols)^"\n");
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_cols)
   else
       let new_rows = set assoc_cell_list line_num rows in
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let valid_each (clist: cell list) (acc: bool) =
-    let char_list = find_assoc_clist clist 0 in
+    let char_list = find_assoc_clist clist line_num in
     if (List.length char_list) > 1 then
       let word_string = char_list_to_string char_list in
+      print_string word_string;
       acc && (member dict word_string)
     else true in
   List.fold_right valid_each perp_lines true
@@ -680,16 +682,13 @@ let valid_exchange (rack: char list) (tiles: string) (bag: char list)
 let find_remaining_rack (board: game) (turn: move) (rack: char list)
 : char list =
   let (word, dir, coord) = turn in
-  let subline = get_subline board coord dir in
-  let rec remove_used_char (cell_list: cell list) (r: char list)=
-    match cell_list with
+(*   let subline = get_subline board coord dir in *)
+  let rec remove_used_char (w: char list) (r: char list)=
+    match w with
     | [] -> r
-    | x::xs -> (match x.letter with
-            | None -> r
-            | Some a -> if (List.mem a r) then
-                remove_used_char xs (remove_elt r a)
-                else remove_used_char xs r)
-  in remove_used_char subline (to_char_list word)
+    | x::xs -> if (List.mem x r) then remove_used_char xs (remove_elt r x)
+                else remove_used_char xs r
+  in remove_used_char (to_char_list word) rack
 
 
 let find_hd_n_tail (lst:'a list) =
@@ -880,4 +879,4 @@ let () =
   let (_, _, final_plist) = main fst_board fst_bag (tl_plist @ [fst_player]) true in
   let winner = get_winner final_plist in
   print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n")
+   " for playing!\n") (* () *)
