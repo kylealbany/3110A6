@@ -519,6 +519,19 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
   List.fold_right valid_each perp_lines true
 
 
+(* Returns true if the given move is a valid first move in the game
+ *    -[word] a char list of the word to be played
+ *    -[dir] the direction of the word
+ *    -[coord] the coordinates of the first character in the word
+ *)
+let valid_first (word: char list) (dir: direction) (coord: coordinate) : bool =
+  match dir, coord with
+  | Down, (x,y) -> (((int_of_char x) -65) = 7) &&
+                   ((y + List.length word - 1) >= 7)
+  | Across, (x,y) -> ((y-1) = 7) &&
+                     ((((int_of_char x) -65) + List.length word) >= 7)
+
+
 (* See gamestate.mli *)
 let valid_move (board : game) (turn : move) : bool =
   let word, dir, coord = turn in
@@ -574,6 +587,14 @@ let rec get_names (n: int) (m: int): string list =
   let filter_name = trim input_command in
   print_string ("Hi " ^ filter_name);
   filter_name :: (get_names (n-1) (m+1))
+
+(* Returns the winner of the game
+ *    -[plist] the list of players in the game
+ *)
+let get_winner (plist: player list) : player =
+  match safe_hd plist with
+  | None -> failwith "No players initialized"
+  | Some p -> List.fold_right (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p
 
 (* Determines the mode the player wishes to use and generates a list of players
  *)
