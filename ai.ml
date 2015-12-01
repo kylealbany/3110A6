@@ -22,6 +22,19 @@ let distribute c l =
       helper subs (ch::a)
   in helper s [] *)
 
+(* Takes in bytes list s, and integer n. Removes random elements from s until
+   it only contains n elements.*)
+let rec remove_chars s n =
+  let l = List.length s in
+  if l <= n then s
+  else let index = Random.int l in
+  let rec remove_char s index i =
+    match s with
+    | [] -> failwith "reached end in remove_chars without reaching index"
+    | hd::tl -> if i = index then tl else hd::(remove_char tl index (i+1))
+  in
+  remove_chars (remove_char s index 0) n
+
 (* convert a bytes list to a string *)
 let blist_to_string b =
   let rec helper b str =
@@ -33,13 +46,18 @@ let blist_to_string b =
   in helper b ""
 
 (* accepts a byte list and returns a string list containing the permutations *)
-let permutation s =
+(* n is the length of permutations to find. Select n random characters from s and
+   return all permutations of them of length n *)
+let permutation s n =
   let rec perm s =
     match s with
     | [] -> [[]]
     | hd::tl -> List.fold_left (fun acc x -> List.rev_append (distribute hd x) acc)
       [] (perm tl)
   in
+
+  let s = remove_chars s n in
+
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
@@ -48,8 +66,8 @@ let string_compare_helper s1 s2 =
   else if (s1 < s2) then -1
   else 1
 
-let get_valid_words dict chars =
-  let strings = permutation chars in
+let get_valid_words dict chars n =
+  let strings = permutation chars n in
   (* Change search_limit to increase AI difficulty*)
   let search_limit = 10 in
   let words = get_i_words dict strings search_limit 0 in
