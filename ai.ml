@@ -65,6 +65,8 @@ let string_compare_helper s1 s2 =
   else if (s1 < s2) then -1
   else 1
 
+(* Given a list of tiles, finds a subset of length n and finds valid words from
+  all of the permutations of that subset*)
 let get_valid_words dict chars n =
   let strings = permutation chars n in
   (* Change search_limit to increase AI difficulty*)
@@ -79,6 +81,36 @@ let rec get_i_words dict strings (max : int) (i : int)  =
   | [] -> []
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
               else get_i_words dict tl max i
+
+(* Given available chars, try many different subsets of them of different lengths
+  and accumulate all of the playable words that are found.
+ Increasing the upper limits of x for the loops can increase difficulty*)
+let try_tile_subsets dict chars difficulty=
+  let possible_words = ref [] in
+  (* Max length is 8, higher gives stack overflow finding permutations *)
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 8))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 7))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 6))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 5))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 4))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 3))
+  done;
+  for x = 0 to 1*difficulty do
+    (possible_words := !possible_words @ (get_valid_words dict chars 2))
+  done;
+  !possible_words
+
 
 
 (* return the char at letter at index [n] in [line] which is a list of tiles *)
@@ -114,7 +146,7 @@ let filter_tiles tiles =
  * returns a list of playable words
  * assuming the last letter in line is isolated
  * i.e _ _ _ e _ would allow 4 letter words that end in e *)
-let try_above dict tiles line =
+let try_above dict tiles line n =
   let max_len = space_above line in
   let last_letter = match (get_nth_letter line max_len) with
                       | Some x -> x
@@ -126,7 +158,7 @@ let try_above dict tiles line =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (after_last_empty && max_len > 0) then
-    let choices = get_valid_words dict (last_letter::tiles) in
+    let choices = get_valid_words dict (last_letter::tiles) n in
     List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[(String.length x) -1] = last_letter)) choices
@@ -136,7 +168,7 @@ let try_above dict tiles line =
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
-let try_below dict tiles line =
+let try_below dict tiles line n =
   let line = List.rev line in
   let max_len = space_above line in
   let first_letter = match (get_nth_letter line max_len) with
@@ -149,7 +181,7 @@ let try_below dict tiles line =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (before_first_empty && max_len > 0) then
-    let choices = get_valid_words dict (first_letter::(tiles)) in
+    let choices = get_valid_words dict (first_letter::(tiles)) n in
     List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[0] = first_letter)) choices
