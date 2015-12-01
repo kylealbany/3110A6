@@ -308,5 +308,5 @@ let choose_word game player dict =
   let potential_moves = gen_move_list game player dict in
   let f = fun x -> valid_move game x
   let playable_moves = List.filter f potential_moves in
-  List.sort compare_scores playable_moves
+  List.sort_uniq compare_scores playable_moves
 
