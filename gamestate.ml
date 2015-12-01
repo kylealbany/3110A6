@@ -1,20 +1,21 @@
 open String
+(* open Board *)
 
-type player = {name: string; mutable score: int; isCPU: bool}
+type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
 type game = grid
 type move = string*direction*coordinate
 type mode = Single | Multi | Err
 
 
-(* Initializes players for each name in the string list. Players are initalized
+(* (* Initializes players for each name in the string list. Players are initalized
  * with a score of zero.
  *    -[names] list if strings of players names
  *)
 let rec init_players (names: string list) : player list =
   match names with
   | [] -> []
-  | x::xs -> {name = x; score = 0; isCPU = false}::(init_players xs)
+  | x::xs -> {name = x; score = 0; isCPU = false}::(init_players xs) *)
 
 (* Initializes all the tiles of an official scrabble game *)
 let init_tiles () : char list =
@@ -52,6 +53,49 @@ let rec gen_random_tiles (clist: char list) (n: int) : (char list) * (char list)
         let (chars,tiles) = (gen_random_tiles new_clist (n-1)) in
         (chars, rand_elt::tiles)
 
+(* Initializes players for each name in the string list. Players are initalized
+ * with a score of zero. They are each given 7 random tiles from the games tile
+ * pool. Returns a list of initialized players and the remaining tile pool
+ *    -[names] list if strings of players names
+ *    -[all_tiles] character list of all of the remaining tiles in the game
+ *)
+let rec init_players (names: string list) (all_tiles: char list) :
+player list * char list =
+  match names with
+  | [] -> ([], all_tiles)
+  | x::xs ->
+      let (player_tiles, game_tiles) = gen_random_tiles all_tiles 7 in
+      let (plist, tlist) = init_players xs game_tiles in
+      ({name = x; score = 0;isCPU = false;rack = player_tiles} :: plist, tlist)
+
+(* Creates a string of the player's tile to be printed out
+ *    -[playr] is the player whose tiles are to be displayed (whose turn it is)
+ *)
+(*TODO*)let print_player_tiles (playr: player) : string =
+  let clist = playr.rack in
+  let n = List.length clist in
+  let rec create_border (n: int) (s1: string) (s2: string) =
+    if n = 0 then s2 else s1 ^ (create_border (n-1) s1 s2) in
+  let rec create_tiles (lst: char list) =
+    match clist with
+    | [] -> "|\n"
+    | x::xs -> "| " ^ (Char.escaped x) ^ " " ^ create_tiles xs in
+  let border = create_border n "+---" "+\n" in
+  border ^ (create_tiles clist) ^ border ^ (create_border n "===" "\n")
+
+(* Returns a list of the player's tiles in a randomized order
+ *    -[playr] is the player whose tiles are to be shuffled
+ *)
+(*TODO*)let shuffle_player_tiles (playr: player) : char list =
+  let clist = playr.rack in
+  let rec shuffle_help (lst: char list) =
+    match lst with
+    | [] -> []
+    | x ->
+      let rand = Random.int (List.length x) in
+      let rand_elt = List.nth x rand in
+      rand_elt :: shuffle_help (remove_elt x rand_elt) in
+  shuffle_help clist
 
 let get_winner (plist: player list) : player =
   failwith "megan is the winner"
@@ -144,6 +188,7 @@ let find_assoc_index lst index =
     | h::t -> if h.letter = None then (15-i) else helper t (i+1)
   in helper (nth_and_tail (List.rev lst) (15-index)) (15-index)
 
+
 let find_assoc_rindex lst index =
   let rec helper wrd i =
     match wrd with
@@ -152,6 +197,7 @@ let find_assoc_rindex lst index =
   in (helper (nth_and_tail lst index) 0)+index-1
 (*   14 - (find_assoc_index (List.rev lst) (15-index)) *)
 
+(* Takes in full line and index of the first letter in the word *)
 let find_assoc_clist cell_list index =
   let sub = nth_and_tail cell_list index in
   let rec helper lst =
@@ -214,10 +260,36 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int) =
       new_s:: update_cell_list cs ss n
       else s:: update_cell_list (c::cs) ss (n-1)
   | _, [] -> failwith "Invalid character insertion"
+
+
+(* Check associated list with a letter in the word being played,
+if the length of that associated list is > 1, then score it and add it to the total
+score
+    -[n] is the index of the cell list
+    -[score] is accumlated associated word score*)
+let get_assoc_score (clist: cell list) (n: int) =
+  let assoc_start = find_assoc_index clist n in
+  let assoc = find_assoc_clist clist assoc_start in
+  if List.length assoc > 1
+    then let word_score, word_mult = score_main assoc (nth_and_tail clist assoc_start) in
+          word_score * word_mult
+    else 0
+
+let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
+  let rec count_tiles (clist: cell list) (i: int) =
+    match clist with
+    | [] -> 0
+    | x::xs ->
+        (match x.letter with
+                 | None | Some '@' -> if i = 0 then 0 else count_tiles xs (i-1)
+                 | Some a -> if i = 0 then 0 else (1 + (count_tiles xs (i-1)))) in
+  print_string (string_of_int (count_tiles cell_lst n));
+  ((List.length char_lst) - (count_tiles cell_lst n)) = 7
+
 (* let check_for_para para_i_list adj_lines *)
 
 (*
-Get adjacent lines to the main line the word is played on
+XGet adjacent lines to the main line the word is played on
 Cut those to only consider cells actually adjacent to the word played
 Check each of those sublines for letters
   -> no letters -> return score
@@ -233,10 +305,10 @@ let word_score (board: game) (turn: move) : int =
   let word, dir, coordinates = turn in
   let subl = get_subline board coordinates dir in
   let wlist = to_char_list word in
-(*   let rows, columns = board in *)
+  let rows, columns = board in
 (*   let para_lines = if dir = Down then columns else rows in *)
-  let start_index = if dir = Down then (snd coordinates)-1
-  else (int_of_char (fst coordinates))-65 in
+  let start_index, line_num = if dir = Down then (snd coordinates)-1, (int_of_char (fst coordinates))-65
+  else (int_of_char (fst coordinates))-65, (snd coordinates)-1 in
 (*   let adj_lines = if dir = Down then rows else columns in *)
   let played_score = score_main wlist (get_subline board coordinates dir) in
   (* Check if word played is a prefix or suffix of existing word *)
@@ -250,7 +322,24 @@ let word_score (board: game) (turn: move) : int =
     let (exten_total, exten_mult) = score_main (find_assoc_clist assoc_cell_list exten_start) subl in
     exten_total * exten_mult
   else fst played_score * snd played_score in
-  new_played_score
+  (* Adjacent score calculating logic *)
+  (* let adj_lines = if dir = Down then get_adj columns line_num else get_adj rows line_num in*)
+  let rec helper line_list n =
+  match line_list with
+  | [] -> 0
+  | h::t -> get_assoc_score h n + helper t n
+  in
+  let perp_lines =
+  (if dir = Down then
+      let new_cols = set assoc_cell_list line_num columns in
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_cols)
+    else
+      let new_rows = set assoc_cell_list line_num rows in
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
+  in
+  let adj_score = helper perp_lines line_num in
+  let bingo_bonus = if bingo wlist subl (List.length wlist) then 50 else 0 in
+  new_played_score + adj_score + bingo_bonus
 
 
 (* Filters the game mode to return Single if its single player mode (1 player
@@ -260,7 +349,7 @@ let word_score (board: game) (turn: move) : int =
 let filer_mode (s: string) : mode =
   let filtered = trim (uppercase s) in
   if filtered = "SPM" then Single else
-  if filtered = "MP" then Multi else Err
+  if filtered = "MPM" then Multi else Err
 
 (* Reads the user input to get the number of multiplayers.
  * postcondition: output must be a int between 2 and 4
@@ -292,18 +381,21 @@ let rec get_names (n: int) (m: int): string list =
 
 (* Determines the mode the player wishes to use and generates a list of players
  *)
-let rec init_game_players () : player list =
+let rec init_game_players (bag: char list) : player list * char list =
   let input_command = read_line () in
   match filer_mode input_command with
-  | Err -> print_string "\n>> Command not recognized. Please enter SPM or MP:  "; init_game_players ()
+  | Err -> print_string "\n>> Command not recognized. Please enter SPM or MP:  "; init_game_players bag
   | Single -> print_string "\n>> Single player mode.";
-        {name = "CPU1"; score = 0; isCPU = true} :: init_players (get_names 1 0)
+        let (player_tiles, new_bag) = gen_random_tiles bag 7 in
+        let (other_players, rest_bag) = init_players (get_names 1 0) new_bag in
+        (({name = "CPU1"; score = 0; isCPU = true; rack = player_tiles} ::
+                  other_players), rest_bag)
   | Multi -> print_string ("\n>> Multiplayer mode.\n>> Multiplayer mode" ^
         " can be played with 2 to 4 players.\n>> Enter # of players:  ");
         let num_players = get_player_num () in
-        init_players (get_names num_players 1)
+        init_players (get_names num_players 1) bag
 
 let () =
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
-    ^ "Player Mode(SPM) or Multiplayer Mode (MM)?\n>> Enter SPM or MP:  ");
+    ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
   (* let _ = init_game_players () in *) ()

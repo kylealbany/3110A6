@@ -1,4 +1,4 @@
-type player
+type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate
 type game
 type move
