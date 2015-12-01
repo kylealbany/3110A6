@@ -20,7 +20,7 @@ let insert dict key  =
   | true -> (* let _ = PString.remove key dict in *)
             let new_map = PString.add key () dict in new_map
 
-let init fname =
+let dict_init fname =
   let dict = ref empty in
   let file = open_in fname in
   try
