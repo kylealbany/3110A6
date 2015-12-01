@@ -87,7 +87,7 @@ let filter_tiles tiles =
    List.map
   (fun t -> match t with | Some x -> x | _ -> failwith "error filter") no_none
 
-(* [tiles] is AI's current rack of tiles, [line] is one row or col in a grid
+(* [tiles] is AI's current rack as byte list, [line] is one row or col in a grid
  * returns a list of playable words
  * assuming the last letter in line is isolated
  * i.e _ _ _ e _ would allow 4 letter words that end in e *)
@@ -103,13 +103,36 @@ let try_above dict tiles line =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (after_last_empty && max_len > 0) then
-    let choices = get_valid_words dict (last_letter::(filter_tiles tiles)) in
+    let choices = get_valid_words dict (last_letter::tiles) in
     List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[(String.length x) -1] = last_letter)) choices
   else []
 
+
+
+(* [tiles] byte list, [line] cell list, returns a list of possible words
+ * if space available below and last tile is isolated *)
 let try_below dict tiles line =
+  let line = List.rev line in
+  let max_len = space_above line in
+  let first_letter = match (get_nth_letter line max_len) with
+                      | Some x -> x
+                      | None -> failwith "outside board"
+    in
+  let before_first_empty = match (get_nth_letter line (max_len + 1)) with
+                      | Some x -> false
+                      | None -> true
+    in
+  (* if space available above and last tile is isolated return words that fit*)
+  if (before_first_empty && max_len > 0) then
+    let choices = get_valid_words dict (first_letter::(tiles)) in
+    List.filter
+      (fun x -> (String.length x <= (max_len +1))
+      && (x.[0] = first_letter)) choices
+  else []
+
+(* let try_below dict tiles line =
   let max_len = space_below line in
   let index = (List.length line) - max_len -1 in
   let first_letter = match (get_nth_letter line index) with
@@ -126,7 +149,7 @@ let try_below dict tiles line =
     List.filter
       (fun x -> (String.length x <= (max_len+1))
       && (x.[0] = first_letter)) choices
-  else []
+  else [] *)
 
 
 
