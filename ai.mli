@@ -1,6 +1,4 @@
-
-
-  (* Generates a list of possible words based on the current board
+(* Generates a list of possible words based on the current board
      and the AI’s rack *)
   val gen_word_list : game -> move list
 
