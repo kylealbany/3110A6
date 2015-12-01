@@ -118,6 +118,7 @@ let get_word_score word =
     in
     (String.iter get_char_score word); !score_ref
 
+
 let compare_score word1 word2 =
   let score1 = get_word_score word1 in
   let score2 = get_word_score word2 in
@@ -147,25 +148,25 @@ let rec choose_best_word words =
 let try_tile_subsets dict chars=
   let possible_words = ref [] in
   (* Max length is 8, higher gives stack overflow finding permutations *)
-  for x = 0 to 2 do
+ (*  for x = 0 to 1 do
     (possible_words := !possible_words @ (get_valid_words dict chars 8))
   done;
-  for x = 0 to 4 do
+  for x = 0 to 2 do
     (possible_words := !possible_words @ (get_valid_words dict chars 7))
-  done;
-  for x = 0 to 8 do
+  done; *)
+  for x = 0 to 4 do
     (possible_words := !possible_words @ (get_valid_words dict chars 6))
   done;
-  for x = 0 to 16 do
+  for x = 0 to 8 do
     (possible_words := !possible_words @ (get_valid_words dict chars 5))
   done;
-  for x = 0 to 32 do
+  for x = 0 to 16 do
     (possible_words := !possible_words @ (get_valid_words dict chars 4))
   done;
-  for x = 0 to 64 do
+  for x = 0 to 32 do
     (possible_words := !possible_words @ (get_valid_words dict chars 3))
   done;
-  for x = 0 to 128 do
+  for x = 0 to 64 do
     (possible_words := !possible_words @ (get_valid_words dict chars 2))
   done;
   List.sort_uniq compare_score !possible_words
@@ -182,7 +183,7 @@ let space_above line =
 
 (* return the number of open tiles after the last occupied tile in [line] *)
 let space_below line =
-  space_above (List.rev line)
+   space_above (List.rev line)
 
 (* given a tile list [tiles] return a list of each tiles letters as bytes *)
 let filter_tiles tiles =
@@ -228,7 +229,7 @@ let try_above dict tiles line =
             let filtered = List.filter
               (fun x -> (String.length x <= (max_len +1))
               && (x.[(String.length x)-1] = last_letter)) choices
-            in (filtered,max_len)
+            in (filtered,max_len+1)
           else ([], -1)
         (* last tile on 15th cell, no need to check below it *)
         else
@@ -236,48 +237,57 @@ let try_above dict tiles line =
           let filtered = List.filter
             (fun x -> (String.length x <= (max_len +1))
             && (x.[(String.length x)-1] = last_letter)) choices
-          in (filtered,max_len)
+          in (filtered,max_len+1)
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
 let try_below dict tiles line =
-  let line = List.rev line in
-  let max_len = space_above line in
+  let max_len = space_below line in
+  let () = print_string ("max_len ") in
+  let () = print_string (string_of_int max_len) in
+  let () = print_string ("\n") in
   if max_len = -1 then ([],-1)
 
   else
+    let first_tile_index = (List.length line) - max_len -1 in
+    let () = print_string ("below tile index: " ) in
+    let () = print_string (string_of_int first_tile_index) in
+    let () = print_string ("\n") in
+    let first_tile = List.nth line first_tile_index in
 
-    let first_tile = List.nth line max_len in
-    let first_letter = extract_letter first_tile in
     if (is_tile_empty first_tile || max_len = 0) then ([],-1)
 
     else
-      if (max_len+1) < 15 then
-        let before_first_tile = (List.nth line (max_len + 1)) in
+      let first_letter = extract_letter first_tile in
+      let () = print_string ("\ntile letter: " ) in
+      let () = print_string (String.make 1 first_letter) in
+      let () = print_string ("\n") in
+      if (first_tile_index-1) > 0 then
+        let before_first_tile = (List.nth line (first_tile_index - 1)) in
+        let () = print_string "checking before first tile, try_below\n" in
         let before_first_empty = is_tile_empty  before_first_tile in
 
-        (* ensure tile before is empty, only when room *)
         if before_first_empty then
-
           let choices = try_tile_subsets dict (first_letter::tiles) in
+          let () = print_string "before first empty\n" in
           let filtered = List.filter
             (fun x -> (String.length x <= (max_len +1))
             && (x.[0] = first_letter)) choices
-           in (filtered,max_len)
+           in (filtered,first_tile_index)
         else ([],-1)
 
       else
-
+        let () = print_string "\ninside last else" in
         let choices = try_tile_subsets dict (first_letter::tiles) in
         let filtered = List.filter
           (fun x -> (String.length x <= (max_len +1))
           && (x.[0] = first_letter)) choices
-         in (filtered,max_len)
+         in (filtered,first_tile_index)
 
 let gen_down_move words col_index dir =
   let word_list = fst words in
   let col_letter = char_of_int (col_index + 65) in
-  let cord = (col_letter,(snd words) + 1) in
+  let cord = (col_letter,(snd words) + 1) in (* off by one i.e. add one more*)
   let f x = (x,dir,cord) in
     List.map f word_list
 
@@ -298,12 +308,17 @@ let gen_left_move words row_index dir =
   List.map f word_list
 
 let gen_right_move words row_index dir =
+  let () = print_string "row index is: " in
+  let () = print_string (string_of_int row_index) in
+  let () = print_string "\n" in
+  let () = print_string ("col index is: ") in
+  let () = print_string (string_of_int (snd words)) in
   let word_list = fst words in
   let col_letter = char_of_int ((snd words) + 65) in
+  let () = print_string (String.make 1 (char_of_int((snd words) + 65))) in
   let cord = (col_letter,row_index + 1) in
   let f x = (x,dir,cord) in
     List.map f word_list
-f
 
 (* [ai] is a player
  * [game] is a grid of cols and rows
@@ -312,7 +327,7 @@ f
  * note the words are not necessarily playable, just valid within a column *)
 let gen_move_list game ai dict =
   (* n can be changed as needed *)
-  let tiles = replace_wildcards ai.rack in
+  let tiles = replace_wildcards ai.rack 'a' in
   let rows = fst game in
   let cols = snd game in
   let num_col = List.length cols in
@@ -350,6 +365,65 @@ let compare_scores move1 move2 game =
   else if score1 = score2 then 0
   else 1
 
+
+let get_char_score character =
+  match character with
+  | 'A' -> 1
+  | 'B' -> 3
+  | 'C' -> 3
+  | 'D' -> 2
+  | 'E' -> 1
+  | 'F' -> 4
+  | 'G' -> 2
+  | 'H' -> 4
+  | 'I' -> 1
+  | 'J' -> 8
+  | 'K' -> 5
+  | 'L' -> 1
+  | 'M' -> 3
+  | 'N' -> 1
+  | 'O' -> 1
+  | 'P' -> 3
+  | 'Q' -> 10
+  | 'R' -> 1
+  | 'S' -> 1
+  | 'T' -> 1
+  | 'U' -> 1
+  | 'V' -> 4
+  | 'W' -> 4
+  | 'X' -> 8
+  | 'Y' -> 4
+  | 'Z' -> 10
+  | '*' -> 0
+  | _ -> failwith "Invalid character encountered in Ai.get_char_score"
+
+let compare_char_score char1 char2 =
+  let score1 = get_char_score char1 in
+  let score2 = get_char_score char2 in
+  if score1>score2 then -1
+  else if score1=score2 then 0
+  else 1
+
+let rec get_duplicates chars =
+  match chars with
+  | [] -> []
+  | hd::tl -> if List.mem hd tl then hd :: get_duplicates tl
+              else get_duplicates tl
+
+(* Exchange any duplicate tiles first, and then highest valued tiles, because
+   they are the hardest to find valid words with. Want 3 total tiles to swap  *)
+let exchange_tiles tiles =
+  let duplicates = get_duplicates tiles in
+  if (List.length duplicates) >= 3 then duplicates
+  else let num_to_remove = 3 - (List.length duplicates) in
+  let remaining_tiles = List.sort_uniq compare_char_score tiles in
+  let rec remove_n_highest tiles n i =
+    if i = n then []
+    else match tiles with
+    | [] -> []
+    | hd::tl -> hd::(remove_n_highest tl n (i+1))
+  in
+  duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
 let choose_word game player dict =
   let potential_moves = gen_move_list game player dict in
