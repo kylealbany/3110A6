@@ -123,11 +123,11 @@ let update_board grid word coordinates direction =
  *)
 let get_type (c: cell) : string =
   match c.letter_mult, c.word_mult, c.letter with
-  | 1, 3, None -> "|\027[48;5;208m\027[30m TW \027[0m"
-  | 1, 2, None -> "|\027[48;5;218m\027[30m DW \027[0m"
-  | 3, 1, None -> "|\027[48;5;20m\027[30m TL \027[0m"
-  | 2, 1, None -> "|\027[48;5;69m\027[30m DL \027[0m"
-  | 1, 1, None -> "|    "
+  | 1, 3, None -> "|\027[48;5;208m\027[38;5;0m TW \027[0m"
+  | 1, 2, None -> "|\027[48;5;218m\027[38;5;0m DW \027[0m"
+  | 3, 1, None -> "|\027[48;5;20m\027[38;5;0m TL \027[0m"
+  | 2, 1, None -> "|\027[48;5;69m\027[38;5;0m DL \027[0m"
+  | 1, 1, None -> "|\027[48;5;15m    \027[0m"
   | 1, 2, Some a -> "| " ^ (Char.escaped a) ^ "  "
   | 1, 1, Some a -> "| "^ (Char.escaped a) ^"  "
   | _, _, _ -> failwith "Not valid tile"
