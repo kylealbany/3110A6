@@ -275,6 +275,16 @@ let get_assoc_score (clist: cell list) (n: int) =
           word_score * word_mult
     else 0
 
+let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
+  let rec count_tiles (clist: cell list) (i: int) =
+    match clist with
+    | [] -> 0
+    | x::xs ->
+        (match x.letter with
+                 | None | Some '@' -> if i = 0 then 0 else count_tiles xs (i-1)
+                 | Some a -> if i = 0 then 0 else (1 + (count_tiles xs (i-1)))) in
+  print_string (string_of_int (count_tiles cell_lst n));
+  ((List.length char_lst) - (count_tiles cell_lst n)) = 7
 
 (* let check_for_para para_i_list adj_lines *)
 
@@ -328,7 +338,8 @@ let word_score (board: game) (turn: move) : int =
       sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let adj_score = helper perp_lines line_num in
-  new_played_score + adj_score
+  let bingo_bonus = if bingo wlist subl (List.length wlist) then 50 else 0 in
+  new_played_score + adj_score + bingo_bonus
 
 
 (* Filters the game mode to return Single if its single player mode (1 player
