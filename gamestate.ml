@@ -611,7 +611,9 @@ let play_cmd (str: string) : command =
   let end_dir = find_from (to_char_list new_str) ' ' 0 in
   if end_dir = -1 then Unknown ("Invalid direction in Play command. Enter Help to review\n") else
   let dir = capitalize (sub new_str 0 end_dir) in
-  let col,row = (Char.uppercase (get str (length str - 3))),(Char.code (get str (length str -1)) -48) in
+  let coord_str = trim (sub (trim new_str) (length (trim new_str) - 4) 4) in
+  let col,row = (Char.uppercase (get coord_str 0)), ((Char.code (get coord_str (length coord_str -1)) -48) + if length coord_str = 4 then 10 else 0) in
+  (* let col,row = (Char.uppercase (get str (length str - 3))),(Char.code (get str (length str -1)) -48) in *)
   if not (contains "ABCDEFGHIJKLMNO" col) then Unknown ("Invalid column index\n") else
   if not (row >= 1 && row <=15) then Unknown ("Invalid row index\n") else
   match dir with
