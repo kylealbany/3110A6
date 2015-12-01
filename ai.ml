@@ -1,3 +1,5 @@
+type play = Pass | Move of move
+
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
  * if we need lines we can rewrite ourselves
@@ -60,6 +62,14 @@ let string_compare_helper s1 s2 =
   else if (s1 < s2) then -1
   else 1
 
+
+let rec get_i_words dict strings (max : int) (i : int)  =
+  if i = max then [] else
+  match strings with
+  | [] -> []
+  | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
+              else get_i_words dict tl max i
+
 (* Given a list of tiles, finds a subset of length n and finds valid words from
   all of the permutations of that subset*)
 let get_valid_words dict chars n =
@@ -70,13 +80,6 @@ let get_valid_words dict chars n =
   List.sort_uniq string_compare_helper words
 
 
-let rec get_i_words dict strings (max : int) (i : int)  =
-  if i = max then [] else
-  match strings with
-  | [] -> []
-  | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
-              else get_i_words dict tl max i
-
 
 (* Gets the score of an individual word, not taking the board of wildcareds into
    account at all. *)
@@ -85,32 +88,32 @@ let get_word_score word =
     (score_ref := 0);
     let get_char_score character =
       match character with
-      | 'a' -> score_ref := !score_ref + 1
-      | 'b' -> score_ref := !score_ref + 3
-      | 'c' -> score_ref := !score_ref + 3
-      | 'd' -> score_ref := !score_ref + 2
-      | 'e' -> score_ref := !score_ref + 1
-      | 'f' -> score_ref := !score_ref + 4
-      | 'g' -> score_ref := !score_ref + 2
-      | 'h' -> score_ref := !score_ref + 4
-      | 'i' -> score_ref := !score_ref + 1
-      | 'j' -> score_ref := !score_ref + 8
-      | 'k' -> score_ref := !score_ref + 5
-      | 'l' -> score_ref := !score_ref + 1
-      | 'm' -> score_ref := !score_ref + 3
-      | 'n' -> score_ref := !score_ref + 1
-      | 'o' -> score_ref := !score_ref + 1
-      | 'p' -> score_ref := !score_ref + 3
-      | 'q' -> score_ref := !score_ref + 10
-      | 'r' -> score_ref := !score_ref + 1
-      | 's' -> score_ref := !score_ref + 1
-      | 't' -> score_ref := !score_ref + 1
-      | 'u' -> score_ref := !score_ref + 1
-      | 'v' -> score_ref := !score_ref + 4
-      | 'w' -> score_ref := !score_ref + 4
-      | 'x' -> score_ref := !score_ref + 8
-      | 'y' -> score_ref := !score_ref + 4
-      | 'z' -> score_ref := !score_ref + 10
+      | 'A' -> score_ref := !score_ref + 1
+      | 'B' -> score_ref := !score_ref + 3
+      | 'C' -> score_ref := !score_ref + 3
+      | 'D' -> score_ref := !score_ref + 2
+      | 'E' -> score_ref := !score_ref + 1
+      | 'F' -> score_ref := !score_ref + 4
+      | 'G' -> score_ref := !score_ref + 2
+      | 'H' -> score_ref := !score_ref + 4
+      | 'I' -> score_ref := !score_ref + 1
+      | 'J' -> score_ref := !score_ref + 8
+      | 'K' -> score_ref := !score_ref + 5
+      | 'L' -> score_ref := !score_ref + 1
+      | 'M' -> score_ref := !score_ref + 3
+      | 'N' -> score_ref := !score_ref + 1
+      | 'O' -> score_ref := !score_ref + 1
+      | 'P' -> score_ref := !score_ref + 3
+      | 'Q' -> score_ref := !score_ref + 10
+      | 'R' -> score_ref := !score_ref + 1
+      | 'S' -> score_ref := !score_ref + 1
+      | 'T' -> score_ref := !score_ref + 1
+      | 'U' -> score_ref := !score_ref + 1
+      | 'V' -> score_ref := !score_ref + 4
+      | 'W' -> score_ref := !score_ref + 4
+      | 'X' -> score_ref := !score_ref + 8
+      | 'Y' -> score_ref := !score_ref + 4
+      | 'Z' -> score_ref := !score_ref + 10
       | _ -> failwith "Invalid character encountered in Ai.choose_best_word"
     in
     (String.iter get_char_score word); !score_ref
@@ -168,22 +171,14 @@ let try_tile_subsets dict chars=
   List.sort_uniq compare_score !possible_words
 
 
-(* return the char at letter at index [n] in [line] which is a list of tiles *)
-let rec get_nth_letter line n =
-  match n with
-  | 0 -> (List.hd line).letter (* board is always 15*15 so List.hd is safe *)
-  | _ -> begin match line with
-         | [] -> None
-         | hd::tl-> get_nth_letter tl (n-1)
-         end
-
-(* return the number of open tiles before first occupied tile in [line]*)
+(* return the number of open tiles before first occupied tile in [line] *)
 let space_above line =
   let rec helper l count =
     match l with
     | [] -> count
     | hd::tl -> if hd.letter = None then helper tl (count + 1) else count
-  in helper line 0
+  in
+  let space = helper line 0 in if space = 15 then -1 else space
 
 (* return the number of open tiles after the last occupied tile in [line] *)
 let space_below line =
@@ -197,75 +192,127 @@ let filter_tiles tiles =
    List.map
   (fun t -> match t with | Some x -> x | _ -> failwith "error filter") no_none
 
+
+let is_tile_empty tile =
+  match tile.letter with
+  | Some x -> false
+  | None -> true
+
+(* returns letter in [tile]
+ * tile letter must not be None *)
+let extract_letter tile =
+  match tile.letter with
+  | Some x -> x
+  | _ -> failwith "invariant violated"
+
 (* [tiles] is AI's current rack as byte list, [line] is one row or col in a grid
  * returns a list of playable words
  * assuming the last letter in line is isolated
  * i.e _ _ _ e _ would allow 4 letter words that end in e *)
 let try_above dict tiles line =
-  let max_len = space_above line in
-  let last_letter = match (get_nth_letter line max_len) with
-                      | Some x -> x
-                      | None -> failwith "outside board"
-    in
-  let after_last_empty = match (get_nth_letter line (max_len + 1)) with
-                      | Some x -> false
-                      | None -> true
-    in
-  (* if space available above and last tile is isolated return words that fit*)
-  if (after_last_empty && max_len > 0) then
-    let choices = try_tile_subsets dict (last_letter::tiles)  in
-    let filtered = List.filter
-      (fun x -> (String.length x <= (max_len +1))
-      && (x.[(String.length x)-1] = last_letter)) choices
-    in (filtered,max_len)
-  else ([], -1)
-
-
+    let max_len = (space_above line) in
+    if max_len = -1 then ([],-1)
+    else
+      let last_tile = List.nth line max_len in
+      (* entire row empty no chance of playing tile*)
+      if (is_tile_empty last_tile || max_len = 0) then
+        ([],-1)
+      else
+        let last_letter = extract_letter last_tile in
+        (* must check that tile after is empty *)
+        if ((max_len + 1) < 15 ) then
+          let after_last_tile = (List.nth line (max_len + 1)) in
+          let after_last_empty = is_tile_empty after_last_tile in
+          if after_last_empty then
+            let choices = try_tile_subsets dict (last_letter::tiles)  in
+            let filtered = List.filter
+              (fun x -> (String.length x <= (max_len +1))
+              && (x.[(String.length x)-1] = last_letter)) choices
+            in (filtered,max_len)
+          else ([], -1)
+        (* last tile on 15th cell, no need to check below it *)
+        else
+          let choices = try_tile_subsets dict (last_letter::tiles)  in
+          let filtered = List.filter
+            (fun x -> (String.length x <= (max_len +1))
+            && (x.[(String.length x)-1] = last_letter)) choices
+          in (filtered,max_len)
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
 let try_below dict tiles line =
   let line = List.rev line in
   let max_len = space_above line in
-  let first_letter = match (get_nth_letter line max_len) with
-                      | Some x -> x
-                      | None -> failwith "outside board"
-    in
-  let before_first_empty = match (get_nth_letter line (max_len + 1)) with
-                      | Some x -> false
-                      | None -> true
-    in
-  (* if space available above and last tile is isolated return words that fit*)
-  if (before_first_empty && max_len > 0) then
-    let choices = try_tile_subsets dict (first_letter::tiles) in
-    let filtered = List.filter
-      (fun x -> (String.length x <= (max_len +1))
-      && (x.[0] = first_letter)) choices
-     in (filtered,max_len)
-  else ([],-1)
+  if max_len = -1 then ([],-1)
 
-let gen_down_move words row_index dir =
+  else
+
+    let first_tile = List.nth line max_len in
+    let first_letter = extract_letter first_tile in
+    if (is_tile_empty first_tile || max_len = 0) then ([],-1)
+
+    else
+      if (max_len+1) < 15 then
+        let before_first_tile = (List.nth line (max_len + 1)) in
+        let before_first_empty = is_tile_empty  before_first_tile in
+
+        (* ensure tile before is empty, only when room *)
+        if before_first_empty then
+
+          let choices = try_tile_subsets dict (first_letter::tiles) in
+          let filtered = List.filter
+            (fun x -> (String.length x <= (max_len +1))
+            && (x.[0] = first_letter)) choices
+           in (filtered,max_len)
+        else ([],-1)
+
+      else
+
+        let choices = try_tile_subsets dict (first_letter::tiles) in
+        let filtered = List.filter
+          (fun x -> (String.length x <= (max_len +1))
+          && (x.[0] = first_letter)) choices
+         in (filtered,max_len)
+
+let gen_down_move words col_index dir =
   let word_list = fst words in
-  let col_letter = char_of_int (snd words + 65) in
-  let cord = (col_letter,row_index) in
+  let col_letter = char_of_int (col_index + 65) in
+  let cord = (col_letter,(snd words) + 1) in
   let f x = (x,dir,cord) in
     List.map f word_list
 
-let gen_above_move words row_index dir =
+let gen_above_move words col_index dir =
   let word_list = fst words in
-  let col_letter = char_of_int (snd words + 65) in
-  let f x = let cord = (col_letter,row_index - ((String.length x) -1)) in (x,dir,cord) in
+  let f x =
+    let col_letter = char_of_int (col_index + 65) in
+    let cord = (col_letter,(snd words) - ((String.length x) -1)) in
+      (x,dir,cord) in
+  List.map f word_list
+
+let gen_left_move words row_index dir =
+  let word_list = fst words in
+  let f x =
+    let col_letter = char_of_int ((snd words) - (String.length x) + 65) in
+    let cord = (col_letter,row_index + 1) in
+    (x,dir,cord) in
+  List.map f word_list
+
+let gen_right_move words row_index dir =
+  let word_list = fst words in
+  let col_letter = char_of_int ((snd words) + 65) in
+  let cord = (col_letter,row_index + 1) in
+  let f x = (x,dir,cord) in
     List.map f word_list
+f
 
 (* [ai] is a player
  * [game] is a grid of cols and rows
  * iterate through each column and add playable words using [ai] rack
  * to a word list- returns word list
  * note the words are not necessarily playable, just valid within a column *)
-
 let gen_move_list game ai dict =
   (* n can be changed as needed *)
-  let tiles = ai.rack in
+  let tiles = replace_wildcards ai.rack in
   let rows = fst game in
   let cols = snd game in
   let num_col = List.length cols in
@@ -287,9 +334,9 @@ let gen_move_list game ai dict =
   for row_index = 0 to (num_rows -1) do
     let row = List.nth rows row_index in
     let left_words = try_above dict tiles row in
-    let left_moves = gen_above_move left_words row_index Across in
+    let left_moves = gen_left_move left_words row_index Across in
     let right_words = try_below dict tiles row in
-    let right_moves = gen_down_move right_words row_index Across in
+    let right_moves = gen_right_move right_words row_index Across in
     words := (!words)@left_moves;
     words := (!words)@right_moves;
   done;
@@ -304,7 +351,6 @@ let compare_scores move1 move2 game =
   else 1
 
 
-
 let choose_word game player dict =
   let potential_moves = gen_move_list game player dict in
   let f = fun x -> valid_move game x in
@@ -313,6 +359,5 @@ let choose_word game player dict =
   let sorted_moves = List.sort_uniq f2 playable_moves in
 
   match sorted_moves with
-  | [] -> failwith "TODO"
-  | hd::tl -> hd
-
+  | [] -> Pass
+  | hd::tl -> Move hd
