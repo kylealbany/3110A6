@@ -1,5 +1,5 @@
 open String
-(* open Board *)
+open Board
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
@@ -7,15 +7,6 @@ type game = grid
 type move = string*direction*coordinate
 type mode = Single | Multi | Err
 
-
-(* (* Initializes players for each name in the string list. Players are initalized
- * with a score of zero.
- *    -[names] list if strings of players names
- *)
-let rec init_players (names: string list) : player list =
-  match names with
-  | [] -> []
-  | x::xs -> {name = x; score = 0; isCPU = false}::(init_players xs) *)
 
 (* Initializes all the tiles of an official scrabble game *)
 let init_tiles () : char list =
@@ -71,7 +62,7 @@ player list * char list =
 (* Creates a string of the player's tile to be printed out
  *    -[playr] is the player whose tiles are to be displayed (whose turn it is)
  *)
-(*TODO*)let print_player_tiles (playr: player) : string =
+let print_player_tiles (playr: player) : string =
   let clist = playr.rack in
   let n = List.length clist in
   let rec create_border (n: int) (s1: string) (s2: string) =
@@ -86,7 +77,7 @@ player list * char list =
 (* Returns a list of the player's tiles in a randomized order
  *    -[playr] is the player whose tiles are to be shuffled
  *)
-(*TODO*)let shuffle_player_tiles (playr: player) : char list =
+let shuffle_player_tiles (playr: player) : char list =
   let clist = playr.rack in
   let rec shuffle_help (lst: char list) =
     match lst with
@@ -114,37 +105,14 @@ let rec main (board: game) : unit =
   failwith "no"
 
 
-(** UPDATE BOARD HELPERS **)
-(* Converts an input string to a charater list
- *    -[s] is a string
- *    -Code modeled after OCaml FAQ
- *     http://caml.inria.fr/pub/old_caml_site/FAQ/FAQ_EXPERT-eng.html#strings
- *)
-let to_char_list (s: string) : char list =
-  let rec exp i l =
-    if i < 0 then l else exp (i - 1) (s.[i] :: l) in
-  exp (String.length s - 1) []
+(******************************************************************************)
+(* WORD SCORE HELPERS *********************************************************)
+(******************************************************************************)
 
-(* Transposes a cell matrix so that input rows are stored as columns and input
- * colums are stored as rows
- *   -[mat] is a cell matrix repesenting the row or the column format of the
- *    board
- *   -Code modeled after StackOverflow
+(* Returns the offical tile score of the character
+ *    -[c] is a capitalized char of the standard alphabet or '*' if it
+ *    represents a blank tile
  *)
-(* let rec transpose (mat: 'a list list) : 'a list list =
-  match mat with
-  | [] -> []
-  | [] :: xss -> transpose xss
-  | (x::xs) :: xss ->
-    let get_hd x = (match safe_hd x with
-        | None -> failwith "empty list"
-        | Some a -> a) in
-    let get_tl x = (match safe_tl x with
-        | None -> failwith "empty list"
-        | Some a -> a) in
-    (x::(List.map get_hd xss)) :: transpose (xs::(List.map get_tl xss)) *)
-    (*  *)
-
 let get_char_score c =
   match c with
   | 'A' | 'E' | 'I' | 'O' | 'U' | 'L' | 'N' | 'S' | 'T' | 'R' -> 1
@@ -157,50 +125,81 @@ let get_char_score c =
   | _ -> 0
 
 
-(* Set ith element of list lst to element e *)
-let rec set e i lst =
+(* Set ith element of list lst to element e
+ *    -[i] is an int repesenting the index of the list
+ *    -[e] is the 'a element we wish to replace the ith element with
+ *    -[lst] is the 'a list we wish to update
+ *)
+let rec set (e: 'a) (i: int) (lst: 'a list) : 'a list =
   match lst with
   | [] -> []
   | h::t -> if i = 0 then e::t else h::(set e (i-1) t)
 
 
-(* http://stackoverflow.com/questions/2710233/how-to-get-a-sub-list-from-a-list-in-ocaml *)
-let rec sub i j lst =
+(* Creates a sublist of lst from index i to index j. Includes all elements up to
+ * and including j.
+ * http://stackoverflow.com/questions/2710233/how-to-get-a-sub-list-from-a-list-
+ * in-ocaml
+ *     -[list] is an 'a list
+ *     -[i] is the starting index of the sublist
+ *     -[j] is the last index of the sublist
+ *)
+let rec sub (i: int) (j: int) (lst: 'a list) : 'a list =
   match lst with
   | [] -> []
   | h::t -> let tail = if j=0 then [] else sub (i-1) (j-1) t in
             if i>0 then tail else h :: tail
 
 
-let nth_and_tail lst index =
-  let rec helper l x =
+(* Returns the tail of a list starting at the nth element
+ *    -[lst] is the 'a we wish to truncate
+ *    -[index] is the starting index of the truncation
+ *)
+let nth_and_tail (lst: 'a list) (index: int) : 'a list =
+  let rec helper (l: 'a list) (x: int) =
     match l with
     | [] -> []
     | h::t -> if x = 0 then l else helper t (x-1)
   in helper lst index
 
 
-(* Returns the first index of a word given the coordinate of any letter in that word *)
-let find_assoc_index lst index =
-  let rec helper wrd i =
+(* Returns the first index of a word in a cell list (row/column) on the board
+ * given the coordinate of any letter in that word
+ *    -[lst] is a cell list repesenting a row or column on the board
+ *    -[index] an int representing a known idex of the word in a row/column
+ *)
+let find_assoc_index (lst: cell list) (index: int) : int =
+  let rec helper (wrd: cell list) (i: int) =
     match wrd with
     | [] -> 0
     | h::t -> if h.letter = None then (15-i) else helper t (i+1)
+  (* Run helped on sublist of cell list *)
   in helper (nth_and_tail (List.rev lst) (15-index)) (15-index)
 
 
-let find_assoc_rindex lst index =
-  let rec helper wrd i =
+(* Returns the last index of a word in a cell list (row/column) on the board
+ * given the coordinate of any letter in that word
+ *    -[lst] is a cell list repesenting a row or column on the board
+ *    -[index] an int representing a known idex of the word in a row/column
+ *)
+let find_assoc_rindex (lst: cell list) (index: int) : int =
+  let rec helper (wrd: cell list) (i: int) =
     match wrd with
     | [] -> 14
     | h::t -> if h.letter = None then i else helper t (i+1)
   in (helper (nth_and_tail lst index) 0)+index-1
-(*   14 - (find_assoc_index (List.rev lst) (15-index)) *)
 
-(* Takes in full line and index of the first letter in the word *)
-let find_assoc_clist cell_list index =
+
+(* Given the first a full row/column of the board and the index of the first
+ * index of the word, returns a char list of the entire word in that row/col
+ * startinf at that index
+ *    -[cell_list] is a cell list representing a row/column on the board
+ *    -[index] is an in represing the starting index of the word in that
+ *    row/column
+ *)
+let find_assoc_clist (cell_list: cell list) (index: int) : char list =
   let sub = nth_and_tail cell_list index in
-  let rec helper lst =
+  let rec helper (lst: cell list) =
     match lst with
     | [] -> []
     | x::xs ->
@@ -211,21 +210,29 @@ let find_assoc_clist cell_list index =
 
 
 (* Scores the main word formed by the tiles the player played. Takes in char
-   list of the word played and the subline of the row/column *)
-let score_main (wlist: char list) (subline: cell list) =
+ * list of the word played and the subline of the row/column. Returns the score
+ * and word multiplier pair
+ *    -[wlist] is a char list of the word being played
+ *    -[subline] is a sublist of the row/column the word is being played on
+ *     starting at the index the word is being inserted at
+ *)
+let score_main (wlist: char list) (subline: cell list): int * int =
   let wmult = ref 1 in
   let rec helper wrd sub1 score =
     match wrd, sub1 with
     | [], _ -> (score,(!wmult))
-    | h::t, hl::tl -> wmult := (!wmult*hl.word_mult); helper t tl ((hl.letter_mult * (get_char_score h))+score)
+    | h::t, hl::tl -> wmult := (!wmult*hl.word_mult);
+        helper t tl ((hl.letter_mult * (get_char_score h))+score)
     | _,_ -> failwith "invalid word"
   in helper wlist subline 0
 
 
-(* Check if existing word above and below (can use f_a_w). If no -> multiply pair return from score_main, yes -> replace score with total word score (score + score_adj for remainder of word) times wmult *)
-
-let get_adj lines index =
-  let rec helper l x acc =
+(* Retuns a list of rows/columns parallel to the row or column being played.
+ *    -[lines] is a cell list representing a row/column
+ *    -[index] is the index of that row/column
+ *)
+let get_adj (lines: cell list list) (index: int) : cell list list =
+  let rec helper (l: cell list list) (x: int) (acc: cell list list) =
     match l with
     | [] -> acc
     | h::t -> if ((x = (index -1)) || (x = (index + 1)))
@@ -233,25 +240,38 @@ let get_adj lines index =
   in helper lines 0 []
 
 
-let get_subline board coordinates dir =
+(* Returns a sublist of the row/column on the board that the player starting
+ * at the respective coordinate index
+ *    -[board] is the current board for the game in (row major, col major) form
+ *    -[coordiantes] is the starting coordinates of the word to be played
+ *    -[dir] is the direction the word is to be played in
+ *)
+let get_subline (board: game) (coordinates: coordinate) (dir: direction)
+: cell list =
   match dir,coordinates,board with
   | Down, (x,y), (r,c) -> nth_and_tail (List.nth c ((int_of_char x) -65)) (y-1)
   | Across, (x,y), (r,c) -> nth_and_tail (List.nth r (y-1)) ((int_of_char x)-65)
 
 
-let get_line board coordinates dir =
+(* Returns the entire row/column of the board that that word is to be played on
+ *    -[board] is the current board for the game in (row major, col major) form
+ *    -[coordiantes] is the starting coordinates of the word to be played
+ *    -[dir] is the direction the word is to be played in
+ *)
+let get_line (board: game) (coordinates: coordinate) (dir: direction)
+: cell list =
    match dir,coordinates,board with
   | Down, (x,y), (r,c) -> (List.nth c ((int_of_char x) -65))
   | Across, (x,y), (r,c) -> (List.nth r (y-1))
 
-(* let update_adj_lines adj_lines wlist coordinates dir =
-  match dir,coordinates with
-  | Down, (x,y) ->
-  | Across, (x,y) ->
-  | _, _ -> failwith "nope" *)
 
-(* subl is entire row/column*)
-let rec update_cell_list (clist: char list) (subl: cell list) (n: int) =
+(* Updates the row/col cell list to include the word repsented by the char list
+ *    -[clist] is the char list representing the word to be played
+ *    -[subl] is the entire row/column beginning where the word is
+ *    to be inserted
+ *    -[n] is the starting index of the word*)
+let rec update_cell_list (clist: char list) (subl: cell list) (n: int)
+: cell list =
   match clist, subl with
   | [], x -> x
   | c::cs, s::ss ->
@@ -263,18 +283,27 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int) =
 
 
 (* Check associated list with a letter in the word being played,
-if the length of that associated list is > 1, then score it and add it to the total
-score
-    -[n] is the index of the cell list
-    -[score] is accumlated associated word score*)
-let get_assoc_score (clist: cell list) (n: int) =
+ * if the length of that associated list is > 1, then score it and add it to the
+ * total score
+ *   -[n] is the index of the cell list
+ *   -[score] is accumlated associated word score
+ *)
+let get_assoc_score (clist: cell list) (n: int) : int =
   let assoc_start = find_assoc_index clist n in
   let assoc = find_assoc_clist clist assoc_start in
   if List.length assoc > 1
-    then let word_score, word_mult = score_main assoc (nth_and_tail clist assoc_start) in
-          word_score * word_mult
+    then let word_score, word_mult =
+      score_main assoc (nth_and_tail clist assoc_start) in
+      word_score * word_mult
     else 0
 
+
+(* Returns true if the player gets a bingo by playing all 7 of the tiles on
+ * his/her rack
+ *    -[char_lst] character list of the word bieng played
+ *    -[cell_list] is the sub list of therow/columnn the word is being played in
+ *    starting at the starting index of the word
+ *    -[n] is the lenght of the word*)
 let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
   let rec count_tiles (clist: cell list) (i: int) =
     match clist with
@@ -282,53 +311,45 @@ let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
     | x::xs ->
         (match x.letter with
                  | None | Some '@' -> if i = 0 then 0 else count_tiles xs (i-1)
-                 | Some a -> if i = 0 then 0 else (1 + (count_tiles xs (i-1)))) in
+                 | Some a -> if i = 0 then 0 else (1 + (count_tiles xs (i-1))))
+  in
   print_string (string_of_int (count_tiles cell_lst n));
   ((List.length char_lst) - (count_tiles cell_lst n)) = 7
 
-(* let check_for_para para_i_list adj_lines *)
 
-(*
-XGet adjacent lines to the main line the word is played on
-Cut those to only consider cells actually adjacent to the word played
-Check each of those sublines for letters
-  -> no letters -> return score
-If there are letters, store index in which they're found
-If there's two lists of indexes, flatten them and eliminate duplicates
-    (flatten |> no_dups)
-Take parallel indexes and get corresponding perpendicular lines
-find_assoc_word |> find_assoc_clist to get the word that is perpendicular to played word
-score that word and add it to overall word score
- *)
-
+(* See gamestate.mli *)
 let word_score (board: game) (turn: move) : int =
   let word, dir, coordinates = turn in
+  (* get sublist of row/col starting at respective coordinate *)
   let subl = get_subline board coordinates dir in
+  (* create char list from word *)
   let wlist = to_char_list word in
   let rows, columns = board in
-(*   let para_lines = if dir = Down then columns else rows in *)
-  let start_index, line_num = if dir = Down then (snd coordinates)-1, (int_of_char (fst coordinates))-65
-  else (int_of_char (fst coordinates))-65, (snd coordinates)-1 in
-(*   let adj_lines = if dir = Down then rows else columns in *)
+  let start_index, line_num =
+    if dir = Down then (snd coordinates)-1, (int_of_char (fst coordinates))-65
+    else (int_of_char (fst coordinates))-65, (snd coordinates)-1 in
   let played_score = score_main wlist (get_subline board coordinates dir) in
   (* Check if word played is a prefix or suffix of existing word *)
-  let assoc_cell_list = update_cell_list wlist (get_line board coordinates dir) start_index in
+  let assoc_cell_list =
+    update_cell_list wlist (get_line board coordinates dir) start_index in
   (* Set played score to computed score *)
   let new_played_score =
     if (find_assoc_index assoc_cell_list start_index) <> start_index ||
-    (find_assoc_rindex assoc_cell_list start_index) <> (start_index + (List.length wlist) -1)
+    (find_assoc_rindex assoc_cell_list start_index) <>
+    (start_index + (List.length wlist) -1)
   then
     let exten_start = find_assoc_index assoc_cell_list start_index in
-    let (exten_total, exten_mult) = score_main (find_assoc_clist assoc_cell_list exten_start) subl in
+    let (exten_total, exten_mult) =
+      score_main (find_assoc_clist assoc_cell_list exten_start) subl in
     exten_total * exten_mult
   else fst played_score * snd played_score in
   (* Adjacent score calculating logic *)
-  (* let adj_lines = if dir = Down then get_adj columns line_num else get_adj rows line_num in*)
   let rec helper line_list n =
-  match line_list with
-  | [] -> 0
-  | h::t -> get_assoc_score h n + helper t n
+    match line_list with
+    | [] -> 0
+    | h::t -> get_assoc_score h n + helper t n
   in
+  (* collect words the run perpedicular to the word being played*)
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num columns in
@@ -338,9 +359,14 @@ let word_score (board: game) (turn: move) : int =
       sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let adj_score = helper perp_lines line_num in
+  (* add 50 if all 7 of the player's tiles being used in the word *)
   let bingo_bonus = if bingo wlist subl (List.length wlist) then 50 else 0 in
   new_played_score + adj_score + bingo_bonus
 
+
+(******************************************************************************)
+(* MAIN HELPERS ***************************************************************)
+(******************************************************************************)
 
 (* Filters the game mode to return Single if its single player mode (1 player
  * v. the AI), Multi if its multiplayer mode (no AI), or Other if the command
@@ -384,7 +410,8 @@ let rec get_names (n: int) (m: int): string list =
 let rec init_game_players (bag: char list) : player list * char list =
   let input_command = read_line () in
   match filer_mode input_command with
-  | Err -> print_string "\n>> Command not recognized. Please enter SPM or MP:  "; init_game_players bag
+  | Err -> print_string "\n>> Command not recognized. Please enter SPM or MP:  ";
+        init_game_players bag
   | Single -> print_string "\n>> Single player mode.";
         let (player_tiles, new_bag) = gen_random_tiles bag 7 in
         let (other_players, rest_bag) = init_players (get_names 1 0) new_bag in
