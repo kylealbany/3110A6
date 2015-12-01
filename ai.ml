@@ -85,35 +85,36 @@ let get_word_score word =
     (score_ref := 0);
     let get_char_score character =
       match character with
-      | 'a' -> score_ref := !score_ref + 1
-      | 'b' -> score_ref := !score_ref + 3
-      | 'c' -> score_ref := !score_ref + 3
-      | 'd' -> score_ref := !score_ref + 2
-      | 'e' -> score_ref := !score_ref + 1
-      | 'f' -> score_ref := !score_ref + 4
-      | 'g' -> score_ref := !score_ref + 2
-      | 'h' -> score_ref := !score_ref + 4
-      | 'i' -> score_ref := !score_ref + 1
-      | 'j' -> score_ref := !score_ref + 8
-      | 'k' -> score_ref := !score_ref + 5
-      | 'l' -> score_ref := !score_ref + 1
-      | 'm' -> score_ref := !score_ref + 3
-      | 'n' -> score_ref := !score_ref + 1
-      | 'o' -> score_ref := !score_ref + 1
-      | 'p' -> score_ref := !score_ref + 3
-      | 'q' -> score_ref := !score_ref + 10
-      | 'r' -> score_ref := !score_ref + 1
-      | 's' -> score_ref := !score_ref + 1
-      | 't' -> score_ref := !score_ref + 1
-      | 'u' -> score_ref := !score_ref + 1
-      | 'v' -> score_ref := !score_ref + 4
-      | 'w' -> score_ref := !score_ref + 4
-      | 'x' -> score_ref := !score_ref + 8
-      | 'y' -> score_ref := !score_ref + 4
-      | 'z' -> score_ref := !score_ref + 10
+      | 'A' -> score_ref := !score_ref + 1
+      | 'B' -> score_ref := !score_ref + 3
+      | 'C' -> score_ref := !score_ref + 3
+      | 'D' -> score_ref := !score_ref + 2
+      | 'E' -> score_ref := !score_ref + 1
+      | 'F' -> score_ref := !score_ref + 4
+      | 'G' -> score_ref := !score_ref + 2
+      | 'H' -> score_ref := !score_ref + 4
+      | 'I' -> score_ref := !score_ref + 1
+      | 'J' -> score_ref := !score_ref + 8
+      | 'K' -> score_ref := !score_ref + 5
+      | 'L' -> score_ref := !score_ref + 1
+      | 'M' -> score_ref := !score_ref + 3
+      | 'N' -> score_ref := !score_ref + 1
+      | 'O' -> score_ref := !score_ref + 1
+      | 'P' -> score_ref := !score_ref + 3
+      | 'Q' -> score_ref := !score_ref + 10
+      | 'R' -> score_ref := !score_ref + 1
+      | 'S' -> score_ref := !score_ref + 1
+      | 'T' -> score_ref := !score_ref + 1
+      | 'U' -> score_ref := !score_ref + 1
+      | 'V' -> score_ref := !score_ref + 4
+      | 'W' -> score_ref := !score_ref + 4
+      | 'X' -> score_ref := !score_ref + 8
+      | 'Y' -> score_ref := !score_ref + 4
+      | 'Z' -> score_ref := !score_ref + 10
       | _ -> failwith "Invalid character encountered in Ai.choose_best_word"
     in
     (String.iter get_char_score word); !score_ref
+
 
 let compare_score word1 word2 =
   let score1 = get_word_score word1 in
@@ -302,6 +303,67 @@ let compare_scores move1 move2 game =
   if score1 > score2 then -1
   else if score1 = score2 then 0
   else 1
+
+
+
+let get_char_score character =
+  match character with
+  | 'A' -> 1
+  | 'B' -> 3
+  | 'C' -> 3
+  | 'D' -> 2
+  | 'E' -> 1
+  | 'F' -> 4
+  | 'G' -> 2
+  | 'H' -> 4
+  | 'I' -> 1
+  | 'J' -> 8
+  | 'K' -> 5
+  | 'L' -> 1
+  | 'M' -> 3
+  | 'N' -> 1
+  | 'O' -> 1
+  | 'P' -> 3
+  | 'Q' -> 10
+  | 'R' -> 1
+  | 'S' -> 1
+  | 'T' -> 1
+  | 'U' -> 1
+  | 'V' -> 4
+  | 'W' -> 4
+  | 'X' -> 8
+  | 'Y' -> 4
+  | 'Z' -> 10
+  | '*' -> 0
+  | _ -> failwith "Invalid character encountered in Ai.get_char_score"
+
+let compare_char_score char1 char2 =
+  let score1 = get_char_score char1 in
+  let score2 = get_char_score char2 in
+  if score1>score2 then -1
+  else if score1=score2 then 0
+  else 1
+
+let rec get_duplicates chars =
+  match chars with
+  | [] -> []
+  | hd::tl -> if List.mem hd tl then hd :: get_duplicates tl
+              else get_duplicates tl
+
+(* Exchange any duplicate tiles first, and then highest valued tiles, because
+   they are the hardest to find valid words with. Want 3 total tiles to swap  *)
+let exchange_tiles tiles =
+  let duplicates = get_duplicates tiles in
+  if (List.length duplicates) >= 3 then duplicates
+  else let num_to_remove = 3 - (List.length duplicates) in
+  let remaining_tiles = List.sort_uniq compare_char_score tiles in
+  let rec remove_n_highest tiles n i =
+    if i = n then []
+    else match tiles with
+    | [] -> []
+    | hd::tl -> hd::(remove_n_highest tl n (i+1))
+  in
+  duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
 
 
