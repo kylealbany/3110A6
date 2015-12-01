@@ -114,7 +114,7 @@ let filter_tiles tiles =
  * returns a list of playable words
  * assuming the last letter in line is isolated
  * i.e _ _ _ e _ would allow 4 letter words that end in e *)
-let try_above dict tiles line =
+let try_above dict tiles line n =
   let max_len = space_above line in
   let last_letter = match (get_nth_letter line max_len) with
                       | Some x -> x
@@ -126,17 +126,18 @@ let try_above dict tiles line =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (after_last_empty && max_len > 0) then
-    let choices = get_valid_words dict (last_letter::tiles) in
-    List.filter
+    let choices = get_valid_words dict (last_letter::tiles) n  in
+    let filtered = List.filter
       (fun x -> (String.length x <= (max_len +1))
-      && (x.[(String.length x) -1] = last_letter)) choices
-  else []
+      && (x.[(String.length x)-1] = last_letter)) choices
+    in (filtered,max_len)
+  else ([], -1)
 
 
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
-let try_below dict tiles line =
+let try_below dict tiles line n  =
   let line = List.rev line in
   let max_len = space_above line in
   let first_letter = match (get_nth_letter line max_len) with
@@ -149,11 +150,12 @@ let try_below dict tiles line =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (before_first_empty && max_len > 0) then
-    let choices = get_valid_words dict (first_letter::(tiles)) in
-    List.filter
+    let choices = get_valid_words dict (first_letter::tiles) n in
+    let filtered = List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[0] = first_letter)) choices
-  else []
+     in (filtered,max_len)
+  else ([],-1)
 
 (* let try_below dict tiles line =
   let max_len = space_below line in
@@ -226,9 +228,62 @@ let rec choose_best_word words =
   find_best words
 
 
-let gen_word_list game = failwith "unimplimented"
-(*   let tiles = game.tiles in
-  let perms = permutation tiles in *)
+
+(* words (wordslist, col_index ) *)
+let gen_down_move words row_index dir =
+  let word_list = fst words in
+  let col_letter = char_of_int (snd words + 65) in
+  let cord = (col_letter,row_index) in
+  let f x = (x,dir,cord) in
+    List.map f word_list
+
+let gen_above_move words row_index dir =
+  let word_list = fst words in
+  let col_letter = char_of_int (snd words + 65) in
+  let f x = let cord = (col_letter,row_index - ((String.length x) -1)) in (x,dir,cord) in
+    List.map f word_list
+
+
+
+(* [ai] is a player
+ * [game] is a grid of cols and rows
+ * iterate through each column and add playable words using [ai] rack
+ * to a word list- returns word list
+ * note the words are not necessarily playable, just valid within a column *)
+
+let gen_move_list game ai dict =
+  (* n can be changed as needed *)
+  let n = 30 in
+  let tiles = ai.rack in
+  let rows = fst game in
+  let cols = snd game in
+  let num_col = List.length cols in
+  let words = ref [] in
+
+ (* collect possible words in each column *)
+  for col_index = 0 to (num_col -1) do
+    let col = List.nth cols col_index in
+    let above_words = try_above dict tiles col n in
+    let above_moves = gen_above_move above_words col_index Down in
+    let below_words = try_below dict tiles col n in
+    let below_moves = gen_down_move below_words col_index Down in
+    words := (!words)@above_moves;
+    words := (!words)@below_moves;
+  done;
+
+  (* collect possible words in each row *)
+  let num_rows = (List.length rows -1) in
+  for row_index = 0 to (num_rows -1) do
+    let row = List.nth rows row_index in
+    let left_words = try_above dict tiles row n in
+    let left_moves = gen_above_move left_words row_index Across in
+    let right_words = try_below dict tiles row n in
+    let right_moves = gen_down_move right_words row_index Across in
+    words := (!words)@left_moves;
+    words := (!words)@right_moves;
+  done;
+
+  (!words)
 
 let choose_word movelist =
   failwith "Kyle's a dick"
