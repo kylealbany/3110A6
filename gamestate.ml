@@ -1,11 +1,14 @@
 open String
-(* open Board
-open Dict *)
+open Board
+open Dict
+open Ai
 
-type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
-type coordinate = char*int
+type player = {name: string; score: int; isCPU: bool; rack: char list}
+type coordinate = char * int
 type game = grid
-type move = string*direction*coordinate
+type move = string * direction * coordinate
+type command = Help | Quit | Pass | Shuffle | Score | Play of move
+    | Exchange of string | Unknown of string
 type mode = Single | Multi | Err
 
 (* see gamestate.mli *)
@@ -54,8 +57,8 @@ let rec gen_random_tiles (clist: char list) (n: int) : (char list) * (char list)
  *    -[names] list if strings of players names
  *    -[all_tiles] character list of all of the remaining tiles in the game
  *)
-let rec init_players (names: string list) (all_tiles: char list) :
-player list * char list =
+let rec init_players (names: string list) (all_tiles: char list)
+: player list * char list =
   match names with
   | [] -> ([], all_tiles)
   | x::xs ->
@@ -76,7 +79,8 @@ let print_player_tiles (playr: player) : string =
     | [] -> "|\n"
     | x::xs -> "| " ^ (Char.escaped x) ^ " " ^ create_tiles xs in
   let border = create_border n "+---" "+\n" in
-  border ^ (create_tiles clist) ^ border ^ (create_border n "===" "\n")
+  (playr.name ^ "'s tiles are: \n" ^
+    border ^ (create_tiles clist) ^ border ^ (create_border n "===" "\n"))
 
 (* Returns a list of the player's tiles in a randomized order
  *    -[playr] is the player whose tiles are to be shuffled
@@ -92,21 +96,12 @@ let shuffle_player_tiles (playr: player) : char list =
       rand_elt :: shuffle_help (remove_elt x rand_elt) in
   shuffle_help clist
 
-let get_winner (plist: player list) : player =
-  failwith "megan is the winner"
+(* let get_winner (plist: player list) : player =
+  failwith "megan is the winner" *)
 
-let get_scores (plist: player list) : unit =
+let get_score (plist: player list) : unit =
   failwith "megnas score > peters score"
 
-
-let play_word (board: game) (turn: move) : game =
-  failwith "no"
-
-let exchange (board: game) (tiles: string) : game =
-  failwith "no"
-
-let rec main (board: game) : unit =
-  failwith "no"
 
 
 (******************************************************************************)
@@ -148,10 +143,10 @@ let rec set (e: 'a) (i: int) (lst: 'a list) : 'a list =
  *     -[i] is the starting index of the sublist
  *     -[j] is the last index of the sublist
  *)
-let rec sub (i: int) (j: int) (lst: 'a list) : 'a list =
+let rec sub_list (i: int) (j: int) (lst: 'a list) : 'a list =
   match lst with
   | [] -> []
-  | h::t -> let tail = if j=0 then [] else sub (i-1) (j-1) t in
+  | h::t -> let tail = if j=0 then [] else sub_list (i-1) (j-1) t in
             if i>0 then tail else h :: tail
 
 
@@ -359,10 +354,10 @@ let word_score (board: game) (turn: move) : int =
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num columns in
-      sub start_index (start_index + (List.length wlist)-1) (transpose new_cols)
+      sub_list start_index (start_index + (List.length wlist)-1) (transpose new_cols)
     else
       let new_rows = set assoc_cell_list line_num rows in
-      sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
+      sub_list start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let adj_score = helper perp_lines line_num in
   (* add 50 if all 7 of the player's tiles being used in the word *)
@@ -408,18 +403,18 @@ let check_is_connected (board: game) (line: cell list) (char_list: char list)
   match dir, coord with
   | Down, (x,y) ->
         let adj_lines = get_adj (snd board) ((int_of_char x) -65) in
-        let ext_thru = char_exists (sub (max (y-2) 0)
+        let ext_thru = char_exists (sub_list (max (y-2) 0)
           (min (y + List.length char_list -2) 15) line) in
         let para = (List.map (fun l ->
-          char_exists (sub (y-1) (y + List.length char_list -1) l)) adj_lines)
+          char_exists (sub_list (y-1) (y + List.length char_list -1) l)) adj_lines)
         in
         ext_thru || (List.fold_right (fun x acc -> x || acc) para false)
   | Across, (x,y) ->
         let adj_lines = get_adj (fst board) (y-1) in
-        let ext_thru = char_exists (sub (max ((int_of_char x) -66) 0)
+        let ext_thru = char_exists (sub_list (max ((int_of_char x) -66) 0)
           (min ((int_of_char x) + List.length char_list -66) 15) line) in
         let para = (List.map (fun l ->
-          char_exists (sub ((int_of_char x) -65)
+          char_exists (sub_list ((int_of_char x) -65)
           ((int_of_char x) + List.length char_list -65) l)) adj_lines) in
         ext_thru || (List.fold_right (fun x acc -> x || acc) para false)
 
@@ -505,10 +500,10 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num cols in
-      sub start_index (start_index + (List.length wlist)-1) (transpose new_cols)
+      sub_list start_index (start_index + (List.length wlist)-1) (transpose new_cols)
   else
       let new_rows = set assoc_cell_list line_num rows in
-      sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
+      sub_list start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let valid_each (clist: cell list) (acc: bool) =
     let char_list = find_assoc_clist clist 0 in
@@ -592,11 +587,13 @@ let rec get_names (n: int) (m: int): string list =
 let get_winner (plist: player list) : player =
   match safe_hd plist with
   | None -> failwith "No players initialized"
-  | Some p -> List.fold_right (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p
+  | Some p ->
+    List.fold_right (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p
 
 
 (* See gamestate.mli *)
-let exchange (rack: char list) (tiles: string) (bag: char list) : char list * char list =
+let exchange (rack: char list) (tiles: string) (bag: char list)
+: char list * char list =
   let tile_list = to_char_list tiles in
   let num_tiles = List.length tile_list in
   let rec remove_from_rack (r: char list) (t: char list) =
@@ -606,6 +603,39 @@ let exchange (rack: char list) (tiles: string) (bag: char list) : char list * ch
   let new_rack = remove_from_rack rack tile_list in
   let (new_bag, new_tiles) = gen_random_tiles (bag @ tile_list) num_tiles in
   (new_rack @ new_tiles, new_bag)
+
+
+let find_remaining_rack (board: game) (turn: move) (rack: char list)
+: char list =
+  let (word, dir, coord) = turn in
+  let subline = get_subline board coord dir in
+  let rec remove_used_char (cell_list: cell list) (r: char list)=
+    match cell_list with
+    | [] -> r
+    | x::xs -> (match x.letter with
+            | None -> r
+            | Some a -> if (List.mem a r) then
+                find_tiles_used xs (remove_elt r a)
+                else find_tiles_used xs r)
+
+
+let find_hd_n_tail (lst:'a list) =
+  match lst with
+  | [] -> None
+  | x::xs -> Some (x,xs)
+
+
+let get_hd_n_tail (lst: 'a list) =
+  match find_hd_n_tail lst with
+  | None -> failwith "Player list no initialized"
+  | Some x -> x
+
+
+let rec game_is_over (plist: player list) =
+  match plist with
+  | [] -> false
+  | x::xs -> (x.rack = []) || game_is_over xs
+
 
 (* Determines the mode the player wishes to use and generates a list of players
  *)
@@ -617,14 +647,131 @@ let rec init_game_players (bag: char list) : player list * char list =
   | Single -> print_string "\n>> Single player mode.";
         let (player_tiles, new_bag) = gen_random_tiles bag 7 in
         let (other_players, rest_bag) = init_players (get_names 1 0) new_bag in
-        (({name = "CPU1"; score = 0; isCPU = true; rack = player_tiles} ::
-                  other_players), rest_bag)
+        ( List.rev ({name = "CPU1"; score = 0; isCPU = true; rack = player_tiles}
+               :: other_players), rest_bag)
   | Multi -> print_string ("\n>> Multiplayer mode.\n>> Multiplayer mode" ^
         " can be played with 2 to 4 players.\n>> Enter # of players:  ");
         let num_players = get_player_num () in
         init_players (get_names num_players 1) bag
 
+
+let rec first_move (board: game) (bag: char list) (playr: player)
+: game * char list * player =
+  print_board board;
+  print_string (print_player_tiles playr);
+  print_string (">> Enter command: ");
+  let input_command = read_line () in
+  match (*PARSE THIS SHIT*) with
+  | Quit ->
+      let new_player = {name = playr.name; score = playr.score;
+      isCPU = playr.CPU; rack = []} in
+      (board, bag, new_player)
+      (* quit out of loop *)
+  | Help -> print_string "help"(*TODO*); first_move board bag playr
+  | Shuffle ->
+      let new_player = {name = playr.name; score = playr.score;
+      isCPU = playr.CPU; rack = shuffle_player_tiles playr} in
+      first_move board bag playr
+  | Score ->
+      let msg = (">> " ^ playr.name ^ "'s score is: " ^
+      (string_of_int playr.score)) in
+      print_string msg; first_move board bag playr
+  | Pass -> (board, bag, playr)
+  | Exchange (tiles) ->
+      let (new_rack, new_bag) = exchange playr.rack tiles bag in
+      let new_player = {name = playr.name; score = playr.score;
+      isCPU = playr.CPU; rack = new_rack} in
+      (board, new_bag, new_player)
+  | Play (turn) ->
+      let turn = (word, coord, dir) in
+      if valid_first word dir coord then
+      if valid_word board turn then
+        let wscore = word_score board turn in
+        let new_board = update_board board word coord dir in
+        let rest_rack = find_remaining_rack board turn playr.rack in
+        let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
+        let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
+        let new_rack = rest_rack @ new_tiles in
+        let new_player = {name = playr.name; score = playr.score + wscore;
+            isCPU = playr.isCPU; rack = new_rack} in
+          print_string (">> " ^ playr.name ^ " played the word " ^ word ^
+            "for " ^ (string_of_int wscore) ^ " points\n");
+        (new_board, new_bag, new_player)
+      else print_string (">> " ^ word ^ " is not a valid word. Please try" ^
+        " again.\n");
+      first_move board bag playr
+      else print_string (">> Move is not valid. The first move must cover the" ^
+            " center of the board. Please try again.\n");
+      first_move board bag playr
+  | Unknown (message) -> print_string message; first_move board bag playr
+
+
+(* See gamestate.mli *)
+let rec main (board: game) (bag: char list) (plist: player list)
+: game * char list * plist =
+  (* check to see if game is over - player has empty rack *)
+  if game_is_over plist then (board, bag, plist) else
+  (* get the first player from the list *)
+  let (playr, tl_plist) = get_hd_n_tail player_list in
+  (* determines if player is AI *)
+  if playr.isCPU then
+    print_string ">> It is CPU1's turn";
+    choose_word board playr ospd
+    (*TODO*)
+  else
+    print_board board;
+    print_string (print_player_tiles playr);
+    print_string (">> Enter command: ");
+    let input_command = read_line () in
+    match (* PARSE THAT SHIT *) with
+    | Quit -> (board, bag, plist)
+    | Help -> print_string "help"(*TODO*); main board bag plist
+    | Shuffle ->
+        let new_player = {name = playr.name; score = playr.score;
+        isCPU = playr.CPU; rack = shuffle_player_tiles playr} in
+        main board bag (new_player @ tl_plist)
+    | Score ->
+        let msg = (">> " ^ playr.name ^ "'s score is: " ^
+        (string_of_int playr.score) ^ "\n") in
+        print_string msg; main board bag plist
+    | Pass -> main board bag (tl_plist @ playr)
+    | Exchange (tiles) ->
+        let (new_rack, new_bag) = exchange playr.rack tiles bag in
+        let new_player = {name = playr.name; score = playr.score;
+        isCPU = playr.CPU; rack = new_rack} in
+        main board new_bag (tl_plist @ new_player)
+    | Play (turn) ->
+        let turn = (word, coord, dir) in
+        if valid_move board turn then
+        if  valid_word board turn then
+          let wscore = word_score board turn in
+          let new_board = update_board board word coord dir in
+          let rest_rack = find_remaining_rack board turn playr.rack in
+          let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
+          let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
+          let new_rack = rest_rack @ new_tiles in
+          let new_player = {name = playr.name; score = playr.score + wscore;
+              isCPU = playr.isCPU; rack = new_rack} in
+          print_string (">> " ^ playr.name ^ " played the word " ^ word ^
+            "for " ^ (string_of_int wscore) ^ " points\n");
+          main new_board new_bag (tl_plist @ new_player)
+        else print_string (">> " ^ word ^ " is not a valid word. Please try" ^
+          " again.\n");
+        main board bag plist
+        else print_string ">> Move is not valid. Please try again.\n";
+        main board bag plist
+    | Unknown (message) -> print_string message; main board bag plist
+
+
 let () =
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
     ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
-  (* let _ = init_game_players () in *) ()
+  let game_bag = init_tiles () in
+  let (player_list, rest_bag) = init_game_players (game_bag) in
+  let board = init_board () in
+  let (hd_plist, tl_plist) = get_hd_n_tail player_list in
+  let (fst_board, fst_bag, fst_player) = first_move board rest_bag hd_plist in
+  let (_, _, final_plist) = main fst_board fst_bag (tl_plist @ fst_player) in
+  let winner = get_winner final_plist in
+  print_string (">> " ^ winner.name ^ "wins! Congratulations!\n>> Thank you" ^
+   " for playing!\n")

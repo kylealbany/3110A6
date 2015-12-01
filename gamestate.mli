@@ -1,7 +1,9 @@
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
-type coordinate
+type coordinate = char * int
 type game
-type move
+type move = string * direction * coordinate
+type command = Help | Quit | Pass | Shuffle | Score | Play of move
+    | Exchange of string | Unknown of string
 
 
 (* Returns random tiles at the beginning of the game and every time a word
@@ -11,8 +13,8 @@ val gen_random_tiles : char list -> int -> char list * char list
 (* Returns player that has the highest score *)
 val get_winner :  player list -> player
 
-(* Prints out all of the players scores *)
-val get_scores : player list -> unit
+(* Prints out the current players score *)
+val get_score : player list -> unit
 
 (* Takes the old board and the move (word to be played, the coordinates of
    the starting tile, and the direction) and returns the score to add to the
@@ -30,15 +32,10 @@ val valid_move : game -> move -> bool
     Scrabble Player Dictionary *)
 val valid_word : game -> move -> bool
 
-(* Plays a word on the board. Assumes only legal words are played. Takes in
-   a game, the move (word to be played, the coordinates of the starting tile,
-   and the direction) and returns a game with the new board *)
-val play_word : game -> move -> game
-
 (* Exchanges tiles, which involves the player selecting any number of tiles
    on his/her rack to swap with random tiles in the bag*)
 val exchange : char list -> string -> char list -> char list * char list
 
 (* REPL function *)
-val main : game -> unit
+val main : game -> char list -> player list -> game * char list * player list
 
