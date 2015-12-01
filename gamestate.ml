@@ -478,7 +478,7 @@ let valid_extension (dict: dict) (board: game) (turn: move) : bool =
     update_cell_list wlist (get_line board coord dir) start_index in
   let new_start = find_assoc_index assoc_cell_list start_index in
   let new_end = find_assoc_rindex assoc_cell_list start_index in
-  if new_start <> start_index || new_end <> (start_index + (List.length wlist) -1)
+  if new_start <> start_index || new_end <> (start_index + (List.length wlist)-1)
   then let exten_clist = find_assoc_clist line new_start in
     let exten_word = char_list_to_string exten_clist in
     member dict exten_word
@@ -512,8 +512,10 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
   in
   let valid_each (clist: cell list) (acc: bool) =
     let char_list = find_assoc_clist clist 0 in
-    let word_string = char_list_to_string char_list in
-    acc && (member dict word_string) in
+    if (List.length char_list) > 1 then
+      let word_string = char_list_to_string char_list in
+      acc && (member dict word_string)
+    else true in
   List.fold_right valid_each perp_lines true
 
 
