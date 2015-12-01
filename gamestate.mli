@@ -18,6 +18,10 @@ val get_scores : player list -> unit
    player’s score *)
 val word_score : game -> move -> int
 
+(* Takes in current board and a proposed move to be played and returns whether
+   the move is legal on the current game board *)
+val valid_move : game -> move -> bool
+
 (* Plays a word on the board. Only allows legal words to be played. Takes in
    a game, the move (word to be played, the coordinates of the starting tile,
    and the direction) and returns a game with the updated score, rack, and

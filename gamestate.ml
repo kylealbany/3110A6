@@ -1,5 +1,5 @@
 open String
-open Board
+(* open Board *)
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
@@ -269,7 +269,8 @@ let get_line (board: game) (coordinates: coordinate) (dir: direction)
  *    -[clist] is the char list representing the word to be played
  *    -[subl] is the entire row/column beginning where the word is
  *    to be inserted
- *    -[n] is the starting index of the word*)
+ *    -[n] is the starting index of the word
+ *)
 let rec update_cell_list (clist: char list) (subl: cell list) (n: int)
 : cell list =
   match clist, subl with
@@ -303,7 +304,8 @@ let get_assoc_score (clist: cell list) (n: int) : int =
  *    -[char_lst] character list of the word bieng played
  *    -[cell_list] is the sub list of therow/columnn the word is being played in
  *    starting at the starting index of the word
- *    -[n] is the lenght of the word*)
+ *    -[n] is the length of the word
+ *)
 let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
   let rec count_tiles (clist: cell list) (i: int) =
     match clist with
@@ -362,6 +364,83 @@ let word_score (board: game) (turn: move) : int =
   (* add 50 if all 7 of the player's tiles being used in the word *)
   let bingo_bonus = if bingo wlist subl (List.length wlist) then 50 else 0 in
   new_played_score + adj_score + bingo_bonus
+
+
+(******************************************************************************)
+(* WORD VALIDATE HELPERS ******************************************************)
+(******************************************************************************)
+
+(* Validates placement *)
+
+(* Returns true if proposed word is within the bounds of the board
+ *    -[word] char list of the word to be played
+ *    -[dir] the direction of the word
+ *    -[coord] coordinates of the starting character
+ *)
+let check_within_board (word: char list) (dir: direction) (coord:coordinate)
+: bool =
+  match dir,coord with
+  | Down, (x,y) -> (y-1)+(List.length word) <= 15
+  | Across, (x,y) -> ((int_of_char x) -65)+(List.length word) <=15
+
+(* Returns true if proposed word is connected in some way to tiles already on
+ * the board
+ *    -[board] the current game board
+ *    -[line] the line the proposed word will be played on
+ *    -[char_list] char list of the word to be played
+ *    -[dir] the direction of the word
+ *    -[coord] coordinates of the starting character
+ *)
+let check_is_connected (board: game) (line: cell list) (char_list: char list)
+(dir: direction) (coord: coordinates) : bool =
+  let rec char_exists (subline : cell list) =
+    match subline with
+    | [] -> false
+    | h::t -> match h.letter with
+        | None | Some '@' -> false || char_exists t
+        | Some a -> true
+  in
+  match dir, coord with
+  | Down, (x,y) ->
+        let adj_lines = get_adj (snd board) ((int_of_char x) -65) in
+        let ext_thru = char_exists (sub (max (y-2) 0)
+          (min (y + List.length char_list -2) 15) line) in
+        let para = (List.map (fun l ->
+          char_exists (sub (y-1) (y + List.length char_list -1) l)) adj_lines)
+        in
+        ext_thru || (List.fold_right (fun x acc -> x || acc) para false)
+  | Across, (x,y) ->
+        let adj_lines = get_adj (fst board) (y-1) in
+        let ext_thru = char_exists (sub (max ((int_of_char x) -66) 0)
+          (min ((int_of_char x) + List.length char_list -66) 15) line) in
+        let para = (List.map (fun l ->
+          char_exists (sub ((int_of_char x) -65)
+          ((int_of_char x) + List.length char_list -65) l)) adj_lines) in
+        ext_thru || (List.fold_right (fun x acc -> x || acc) para false)
+
+(* Returns true if the proposed word does not overwrite existing tiles
+ *    -[subline] the board line to be played on, cut at the word's
+ *    starting index
+ *    -[char_list] char list of the word to be played
+ *)
+let check_no_overwrite subline char_list =
+  let rec helper sub word =
+  match sub, word with
+  | _, [] -> true
+  | [], _ -> false
+  | h::t, hc::tc -> (match h.letter,hc with
+            | None, a | Some '@', a -> true && (helper t tc)
+            | Some x, y -> (x = y) && (helper t tc))
+  in
+  helper subline char_list
+
+(* See gamestate.mli *)
+let valid_move (board : game) (turn : move) : bool =
+  let word, dir, coord = turn in
+  let wlist = to_char_list word in
+  (check_within_board wlist dir coord) &&
+  (check_is_connected board (get_line board coord dir) wlist dir coord) &&
+  (check_no_overwrite (get_subline board coord dir) wlist)
 
 
 (******************************************************************************)
