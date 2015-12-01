@@ -201,7 +201,7 @@ let filter_tiles tiles =
  * returns a list of playable words
  * assuming the last letter in line is isolated
  * i.e _ _ _ e _ would allow 4 letter words that end in e *)
-let try_above dict tiles line n =
+let try_above dict tiles line =
   let max_len = space_above line in
   let last_letter = match (get_nth_letter line max_len) with
                       | Some x -> x
@@ -213,7 +213,7 @@ let try_above dict tiles line n =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (after_last_empty && max_len > 0) then
-    let choices = get_valid_words dict (last_letter::tiles) n  in
+    let choices = try_tile_subsets dict (last_letter::tiles)  in
     let filtered = List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[(String.length x)-1] = last_letter)) choices
@@ -224,7 +224,7 @@ let try_above dict tiles line n =
 
 (* [tiles] byte list, [line] cell list, returns a list of possible words
  * if space available below and last tile is isolated *)
-let try_below dict tiles line n =
+let try_below dict tiles line =
   let line = List.rev line in
   let max_len = space_above line in
   let first_letter = match (get_nth_letter line max_len) with
@@ -237,7 +237,7 @@ let try_below dict tiles line n =
     in
   (* if space available above and last tile is isolated return words that fit*)
   if (before_first_empty && max_len > 0) then
-    let choices = get_valid_words dict (first_letter::tiles) n in
+    let choices = try_tile_subsets dict (first_letter::tiles) in
     let filtered = List.filter
       (fun x -> (String.length x <= (max_len +1))
       && (x.[0] = first_letter)) choices
@@ -265,7 +265,6 @@ let gen_above_move words row_index dir =
 
 let gen_move_list game ai dict =
   (* n can be changed as needed *)
-  let n = 30 in
   let tiles = ai.rack in
   let rows = fst game in
   let cols = snd game in
@@ -275,9 +274,9 @@ let gen_move_list game ai dict =
  (* collect possible words in each column *)
   for col_index = 0 to (num_col -1) do
     let col = List.nth cols col_index in
-    let above_words = try_above dict tiles col n in
+    let above_words = try_above dict tiles col  in
     let above_moves = gen_above_move above_words col_index Down in
-    let below_words = try_below dict tiles col n in
+    let below_words = try_below dict tiles col  in
     let below_moves = gen_down_move below_words col_index Down in
     words := (!words)@above_moves;
     words := (!words)@below_moves;
@@ -287,23 +286,22 @@ let gen_move_list game ai dict =
   let num_rows = (List.length rows -1) in
   for row_index = 0 to (num_rows -1) do
     let row = List.nth rows row_index in
-    let left_words = try_above dict tiles row n in
+    let left_words = try_above dict tiles row in
     let left_moves = gen_above_move left_words row_index Across in
-    let right_words = try_below dict tiles row n in
+    let right_words = try_below dict tiles row in
     let right_moves = gen_down_move right_words row_index Across in
     words := (!words)@left_moves;
     words := (!words)@right_moves;
   done;
-
   (!words)
 
-let choose_word movelist =
-  failwith "Kyle's a dick"
 
-let should_ex movelist =
-  failwith "Baaaaaaaaaaaaaaaaaaaales"
+let choose_word game player dict =
+  let potential_moves = gen_move_list game player dict in
+  let f = fun x -> valid_move game x
+  let playable_moves = List.filter f potential_moves in
+    List.map
 
-let exchange_tiles game =
-  failwith "JK Kyle's actually a pretty cool guy"
+
 
 
