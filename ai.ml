@@ -297,13 +297,6 @@ let gen_move_list game ai dict =
 
   (!words)
 
-let choose_word movelist =
+let choose_word game player dict =
   failwith "Kyle's a dick"
-
-let should_ex movelist =
-  failwith "Baaaaaaaaaaaaaaaaaaaales"
-
-let exchange_tiles game =
-  failwith "JK Kyle's actually a pretty cool guy"
-
 
