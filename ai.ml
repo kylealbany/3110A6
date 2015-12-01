@@ -302,6 +302,3 @@ let choose_word game player dict =
   let playable_moves = List.filter f potential_moves in
     List.map
 
-
-
-

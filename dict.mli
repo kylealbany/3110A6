@@ -1,5 +1,5 @@
-type key
-type value
+type key = string
+type value = unit
 type dict
 
 (* Return the empty dictionary *)
@@ -14,4 +14,4 @@ val insert : dict -> key -> dict
 
 (* Builds a radix tree dictionary when given the file name of a dictionary file
    as input. The file should be formatted as one word per line with nothing else *)
-val init : string -> dict
+val dict_init : string -> dict
