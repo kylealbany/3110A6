@@ -659,7 +659,7 @@ let parse_string (arg: string) : command =
 (* See gamestate.mli *)
 let exchange (rack: char list) (tiles: string) (bag: char list)
 : char list * char list =
-  let tile_list = to_char_list tiles in
+  let tile_list = to_char_list (uppercase tiles) in
   let num_tiles = List.length tile_list in
   let rec remove_from_rack (r: char list) (t: char list) =
     match t with
@@ -671,7 +671,7 @@ let exchange (rack: char list) (tiles: string) (bag: char list)
 
 let valid_exchange (rack: char list) (tiles: string) (bag: char list)
 : string =
-  let t_list = to_char_list tiles in
+  let t_list = to_char_list (uppercase tiles) in
   let on_rack = not (List.exists (fun c -> find_from rack c 0 = -1) t_list) in
   let valid_bag = List.length bag >= 7 in
   if not on_rack then "Some tiles are not in your rack and cannot be exchanged"
