@@ -243,33 +243,22 @@ let try_above dict tiles line =
  * if space available below and last tile is isolated *)
 let try_below dict tiles line =
   let max_len = space_below line in
-  let () = print_string ("max_len ") in
-  let () = print_string (string_of_int max_len) in
-  let () = print_string ("\n") in
   if max_len = -1 then ([],-1)
 
   else
     let first_tile_index = (List.length line) - max_len -1 in
-    let () = print_string ("below tile index: " ) in
-    let () = print_string (string_of_int first_tile_index) in
-    let () = print_string ("\n") in
     let first_tile = List.nth line first_tile_index in
 
     if (is_tile_empty first_tile || max_len = 0) then ([],-1)
 
     else
       let first_letter = extract_letter first_tile in
-      let () = print_string ("\ntile letter: " ) in
-      let () = print_string (String.make 1 first_letter) in
-      let () = print_string ("\n") in
       if (first_tile_index-1) > 0 then
         let before_first_tile = (List.nth line (first_tile_index - 1)) in
-        let () = print_string "checking before first tile, try_below\n" in
         let before_first_empty = is_tile_empty  before_first_tile in
 
         if before_first_empty then
           let choices = try_tile_subsets dict (first_letter::tiles) in
-          let () = print_string "before first empty\n" in
           let filtered = List.filter
             (fun x -> (String.length x <= (max_len +1))
             && (x.[0] = first_letter)) choices
@@ -277,7 +266,6 @@ let try_below dict tiles line =
         else ([],-1)
 
       else
-        let () = print_string "\ninside last else" in
         let choices = try_tile_subsets dict (first_letter::tiles) in
         let filtered = List.filter
           (fun x -> (String.length x <= (max_len +1))
@@ -308,14 +296,8 @@ let gen_left_move words row_index dir =
   List.map f word_list
 
 let gen_right_move words row_index dir =
-  let () = print_string "row index is: " in
-  let () = print_string (string_of_int row_index) in
-  let () = print_string "\n" in
-  let () = print_string ("col index is: ") in
-  let () = print_string (string_of_int (snd words)) in
   let word_list = fst words in
   let col_letter = char_of_int ((snd words) + 65) in
-  let () = print_string (String.make 1 (char_of_int((snd words) + 65))) in
   let cord = (col_letter,row_index + 1) in
   let f x = (x,dir,cord) in
     List.map f word_list
