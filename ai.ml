@@ -147,28 +147,28 @@ let rec choose_best_word words =
 (* Given available chars, try many different subsets of them of different lengths
   and accumulate all of the playable words that are found.
  Increasing the upper limits of x for the loops can increase difficulty*)
-let try_tile_subsets dict chars difficulty=
+let try_tile_subsets dict chars=
   let possible_words = ref [] in
   (* Max length is 8, higher gives stack overflow finding permutations *)
-  for x = 0 to 2*difficulty do
+  for x = 0 to 2 do
     (possible_words := !possible_words @ (get_valid_words dict chars 8))
   done;
-  for x = 0 to 4*difficulty do
+  for x = 0 to 4 do
     (possible_words := !possible_words @ (get_valid_words dict chars 7))
   done;
-  for x = 0 to 8*difficulty do
+  for x = 0 to 8 do
     (possible_words := !possible_words @ (get_valid_words dict chars 6))
   done;
-  for x = 0 to 16*difficulty do
+  for x = 0 to 16 do
     (possible_words := !possible_words @ (get_valid_words dict chars 5))
   done;
-  for x = 0 to 32*difficulty do
+  for x = 0 to 32 do
     (possible_words := !possible_words @ (get_valid_words dict chars 4))
   done;
-  for x = 0 to 64*difficulty do
+  for x = 0 to 64 do
     (possible_words := !possible_words @ (get_valid_words dict chars 3))
   done;
-  for x = 0 to 128*difficulty do
+  for x = 0 to 128 do
     (possible_words := !possible_words @ (get_valid_words dict chars 2))
   done;
   List.sort_uniq compare_score !possible_words
