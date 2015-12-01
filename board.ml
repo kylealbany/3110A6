@@ -49,7 +49,7 @@ let init_board () =
   let ct = {letter_mult = 1; word_mult = 2; letter = Some '@'} in
   let xx = {letter_mult = 1; word_mult = 1; letter = None} in
   let row1 = [tw;xx;xx;dl;xx;xx;xx;tw;xx;xx;xx;dl;xx;xx;tw] in
-  let row2 = [xx;dw;xx;xx;xx;tl;xx;xx;xx;tl;xx;xx;xx;dl;xx] in
+  let row2 = [xx;dw;xx;xx;xx;tl;xx;xx;xx;tl;xx;xx;xx;dw;xx] in
   let row3 = [xx;xx;dw;xx;xx;xx;dl;xx;dl;xx;xx;xx;dw;xx;xx] in
   let row4 = [dl;xx;xx;dw;xx;xx;xx;dl;xx;xx;xx;dw;xx;xx;dl] in
   let row5 = [xx;xx;xx;xx;dw;xx;xx;xx;xx;xx;dw;xx;xx;xx;xx] in
@@ -123,10 +123,10 @@ let update_board grid word coordinates direction =
  *)
 let get_type (c: cell) : string =
   match c.letter_mult, c.word_mult, c.letter with
-  | 1, 3, None -> "| TW "
-  | 1, 2, None -> "| DW "
-  | 3, 1, None -> "| TL "
-  | 2, 1, None -> "| DL "
+  | 1, 3, None -> "|\027[48;5;208m\027[30m TW \027[0m"
+  | 1, 2, None -> "|\027[48;5;218m\027[30m DW \027[0m"
+  | 3, 1, None -> "|\027[48;5;20m\027[30m TL \027[0m"
+  | 2, 1, None -> "|\027[48;5;69m\027[30m DL \027[0m"
   | 1, 1, None -> "|    "
   | 1, 2, Some a -> "| " ^ (Char.escaped a) ^ "  "
   | 1, 1, Some a -> "| "^ (Char.escaped a) ^"  "
