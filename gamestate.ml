@@ -1,11 +1,15 @@
 open String
-(* open Board *)
+(* open Board
+open Dict *)
 
 type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
 type coordinate = char*int
 type game = grid
 type move = string*direction*coordinate
 type mode = Single | Multi | Err
+
+(* see gamestate.mli *)
+let ospd = dict_init "ospd.txt"
 
 
 (* Initializes all the tiles of an official scrabble game *)
@@ -383,6 +387,7 @@ let check_within_board (word: char list) (dir: direction) (coord:coordinate)
   | Down, (x,y) -> (y-1)+(List.length word) <= 15
   | Across, (x,y) -> ((int_of_char x) -65)+(List.length word) <=15
 
+
 (* Returns true if proposed word is connected in some way to tiles already on
  * the board
  *    -[board] the current game board
@@ -392,7 +397,7 @@ let check_within_board (word: char list) (dir: direction) (coord:coordinate)
  *    -[coord] coordinates of the starting character
  *)
 let check_is_connected (board: game) (line: cell list) (char_list: char list)
-(dir: direction) (coord: coordinates) : bool =
+(dir: direction) (coord: coordinate) : bool =
   let rec char_exists (subline : cell list) =
     match subline with
     | [] -> false
@@ -418,6 +423,7 @@ let check_is_connected (board: game) (line: cell list) (char_list: char list)
           ((int_of_char x) + List.length char_list -65) l)) adj_lines) in
         ext_thru || (List.fold_right (fun x acc -> x || acc) para false)
 
+
 (* Returns true if the proposed word does not overwrite existing tiles
  *    -[subline] the board line to be played on, cut at the word's
  *    starting index
@@ -434,6 +440,83 @@ let check_no_overwrite subline char_list =
   in
   helper subline char_list
 
+
+(* Returns the string version of a character list
+ *    -[clist] is a list of characters
+ *)
+let rec char_list_to_string (clist: char list) : string =
+  match clist with
+  | [] -> ""
+  | x::xs -> (Char.escaped x) ^ (char_list_to_string xs)
+
+
+(* Returns true if the word string can be found in the OSPD
+ *    -[dict] is the OSPD radix tress dictionary
+ *    -[turn] is the word being played, the starting coordinates, and the
+ *    direction being played
+ *)
+let valid_main_word (dict: dict) (turn: move) : bool =
+  let word, _, _ = turn in
+  member dict word
+
+
+(* Returns true if the entire word the players move is extending is a valid
+ * word in the OSPD. Returns true if the word does not extend a word.
+ *    -[dict] is the OSPD radix tress dictionary
+ *    -[turn] is the word being played, the starting coordinates, and the
+ *    direction being played
+ *    -[board] is the current board the word is being inserted into stored
+ *    in row major, col major form
+ *)
+let valid_extension (dict: dict) (board: game) (turn: move) : bool =
+  let word, dir, coord = turn in
+  let wlist = to_char_list word in
+  let line = get_line board coord dir in
+  let start_index = (if dir = Down then (snd coord)-1
+      else (int_of_char (fst coord))-65) in
+  let assoc_cell_list =
+    update_cell_list wlist (get_line board coord dir) start_index in
+  let new_start = find_assoc_index assoc_cell_list start_index in
+  let new_end = find_assoc_rindex assoc_cell_list start_index in
+  if new_start <> start_index || new_end <> (start_index + (List.length wlist) -1)
+  then let exten_clist = find_assoc_clist line new_start in
+    let exten_word = char_list_to_string exten_clist in
+    member dict exten_word
+  else true
+
+
+(* Returns true if all of the new words perpendicular to the word being inserted
+ * the are created with the insertion are valid words according to the OSPD
+ *    -[dict] is the OSPD radix tress dictionary
+ *    -[turn] is the word being played, the starting coordinates, and the
+ *    direction being played
+ *    -[board] is the current board the word is being inserted into stored
+ *    in row major, col major form
+ *)
+let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
+  let word, dir, coord = turn in
+  let rows, cols = board in
+  let wlist = to_char_list word in
+  let start_index, line_num =
+    if dir = Down then (snd coord)-1, (int_of_char (fst coord))-65
+    else (int_of_char (fst coord))-65, (snd coord)-1 in
+  let assoc_cell_list =
+    update_cell_list wlist (get_line board coord dir) start_index in
+  let perp_lines =
+  (if dir = Down then
+      let new_cols = set assoc_cell_list line_num cols in
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_cols)
+  else
+      let new_rows = set assoc_cell_list line_num rows in
+      sub start_index (start_index + (List.length wlist)-1) (transpose new_rows))
+  in
+  let valid_each (clist: cell list) (acc: bool) =
+    let char_list = find_assoc_clist clist 0 in
+    let word_string = char_list_to_string char_list in
+    acc && (member dict word_string) in
+  List.fold_right valid_each perp_lines true
+
+
 (* See gamestate.mli *)
 let valid_move (board : game) (turn : move) : bool =
   let word, dir, coord = turn in
@@ -442,6 +525,12 @@ let valid_move (board : game) (turn : move) : bool =
   (check_is_connected board (get_line board coord dir) wlist dir coord) &&
   (check_no_overwrite (get_subline board coord dir) wlist)
 
+
+(* See gamestate.mli *)
+let valid_word (board: game) (turn: move) : bool =
+  (valid_main_word ospd turn) &&
+  (valid_extension ospd board turn) &&
+  (valid_parallels ospd board turn)
 
 (******************************************************************************)
 (* MAIN HELPERS ***************************************************************)
