@@ -722,6 +722,25 @@ let rec init_game_players (bag: char list) : player list * char list =
         init_players (get_names num_players 1) bag
 
 
+let help_string =
+"We hope you enjoy playing our Scrabble game!\n
+Our game recognizes the following commands:\n
+>> Help - Opens the help menu (this thing)\n
+>> Score - Displays your score so far\n
+>> Shuffle - Shuffles your current rack\n
+>> Play word direction coordinates - Plays word in the given direction\n
+   starting at the given coordinates\n
+>> Exchange tiles - Exchanges the selected tiles from your rack\n
+>> Pass - Passes your turn\n
+>> Quit - Ends the game\n
+When playing a word:\n
+1 - Input your the desired word\n
+2 - Specify the direction, either Across or Down\n
+3 - Specify the coordinates, first the column and then the row\n
+e.g. Play EXAMPLE Down H 8\n
+Have fun!\n"
+
+
 let rec first_move (board: game) (bag: char list) (playr: player)
 : game * char list * player =
   failwith "first_move"
@@ -735,7 +754,7 @@ let rec first_move (board: game) (bag: char list) (playr: player)
       isCPU = playr.CPU; rack = []} in
       (board, bag, new_player)
       (* quit out of loop *)
-  | Help -> print_string "help"(*TODO*); first_move board bag playr
+  | Help -> print_string help_string; first_move board bag playr
   | Shuffle ->
       let new_player = {name = playr.name; score = playr.score;
       isCPU = playr.CPU; rack = shuffle_player_tiles playr} in
@@ -795,7 +814,7 @@ let rec main (board: game) (bag: char list) (plist: player list)
     let input_command = read_line () in
     match (* PARSE THAT SHIT *) with
     | Quit -> (board, bag, plist)
-    | Help -> print_string "help"(*TODO*); main board bag plist
+    | Help -> print_string help_string; main board bag plist
     | Shuffle ->
         let new_player = {name = playr.name; score = playr.score;
         isCPU = playr.CPU; rack = shuffle_player_tiles playr} in
