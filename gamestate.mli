@@ -1,7 +1,7 @@
-type player = {name: string; mutable score: int; isCPU: bool; rack: char list}
+type player = {name: string; score: int; isCPU: bool; rack: char list}
 type coordinate = char * int
 type game
-type move = string * direction * coordinate
+type move
 type command = Help | Quit | Pass | Shuffle | Score | Play of move
     | Exchange of string | Unknown of string
 
