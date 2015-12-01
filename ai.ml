@@ -295,7 +295,6 @@ let gen_move_list game ai dict =
   done;
   (!words)
 
-val word_score : game -> move -> int
 
 let compare_scores move1 move2 game =
   let score1 = word_score game move1 in
@@ -304,9 +303,16 @@ let compare_scores move1 move2 game =
   else if score1 = score2 then 0
   else 1
 
+
+
 let choose_word game player dict =
   let potential_moves = gen_move_list game player dict in
-  let f = fun x -> valid_move game x
+  let f = fun x -> valid_move game x in
+  let f2 = fun x y -> compare_scores x y game in
   let playable_moves = List.filter f potential_moves in
-  List.sort_uniq compare_scores playable_moves
+  let sorted_moves = List.sort_uniq f2 playable_moves in
+
+  match sorted_moves with
+  | [] -> failwith "TODO"
+  | hd::tl -> hd
 
