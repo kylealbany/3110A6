@@ -366,7 +366,6 @@ let exchange_tiles tiles =
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
 
-
 let choose_word game player dict =
   let potential_moves = gen_move_list game player dict in
   let f = fun x -> valid_move game x in
