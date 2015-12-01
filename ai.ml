@@ -33,6 +33,13 @@ let rec remove_chars s n =
   in
   remove_chars (remove_char s index 0) n
 
+(* Replace wildcards in char list chars with character *)
+let rec replace_wildcards chars character =
+  match chars with
+  | [] -> []
+  | hd::tl -> if hd = '*' then character::(replace_wildcards tl character)
+              else hd::(replace_wildcards tl character)
+
 (* convert a bytes list to a string *)
 let blist_to_string b =
   let rec helper b str =
