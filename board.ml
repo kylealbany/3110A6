@@ -86,8 +86,8 @@ let rec edit_list (lst:cell list) (n: int) (word: char list) : cell list =
     (match safe_hd word, safe_tl word  with
         | None, _ -> x::edit_list xs (n-1) word
         | _, None -> failwith "empty wordlist"
-        | Some hd , Some tl -> print_string "I'm creating a new letter\n";
-        let new_x = {letter_mult = 1; word_mult = 1; letter = Some hd} in
+        | Some hd , Some tl ->
+            let new_x = {letter_mult = 1; word_mult = 1; letter = Some hd} in
               new_x::edit_list xs n tl)
       else x::(edit_list xs (n-1) word)
 

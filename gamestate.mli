@@ -2,7 +2,7 @@ type player = {name: string; score: int; isCPU: bool; rack: char list}
 type coordinate = char * int
 type game
 type move
-type command = Help | Quit | Pass | Shuffle | Score | Play of move
+type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
     | Exchange of string | Unknown of string
 
 
@@ -37,5 +37,5 @@ val valid_word : game -> move -> bool
 val exchange : char list -> string -> char list -> char list * char list
 
 (* REPL function *)
-val main : game -> char list -> player list -> game * char list * player list
+val main : game -> char list -> player list -> bool -> game * char list * player list
 
