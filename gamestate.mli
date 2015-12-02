@@ -10,14 +10,16 @@ type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
    is played *)
 val gen_random_tiles : char list -> int -> char list * char list
 
+
 (* Returns player that has the highest score *)
 val get_winner :  player list -> player
+
 
 (* Exchanges tiles, which involves the player selecting any number of tiles
    on his/her rack to swap with random tiles in the bag*)
 val exchange : char list -> string -> char list -> char list * char list
 
+
 (* REPL function *)
 val main : (game -> char list -> player list -> bool -> bool ->
             game * char list * player list)
-

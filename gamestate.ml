@@ -227,6 +227,15 @@ let exchange (rack: char list) (tiles: string) (bag: char list)
   let (new_bag, new_tiles) = gen_random_tiles (bag @ tile_list) num_tiles in
   (new_rack @ new_tiles, new_bag)
 
+
+(* Returns a string containing an error message if the tiles the player is
+ * trying to exchange is not valid and and empty string otherwise. The
+ * player can only exchange tiles that exist on their rack. Tiles cannot be
+ * exchanged if the bag has less than 7 tiles.
+ *    -[rack] is the players current rack
+ *    -[tiles] is a string of the tiles the player wants to exchange
+ *    -[bag] is the games current bag
+ *)
 let valid_exchange (rack: char list) (tiles: string) (bag: char list)
 : string =
   let t_list = to_char_list (uppercase tiles) in
@@ -237,6 +246,13 @@ let valid_exchange (rack: char list) (tiles: string) (bag: char list)
   else ""
 
 
+(* Returns the remaining tiles on the player's rack after a word has been
+ * played. If a tile is being written over an exisitng tile on the board, then
+ * it remains on the player's rack
+ *    -[board] is the current baord of the game
+ *    -[turn] is the word beign played, the direction, and coordinate
+ *    -[rack] is the player's current rack
+ *)
 let find_remaining_rack (board: game) (turn: move) (rack: char list)
 : char list =
   let (word, dir, coord) = turn in
@@ -253,18 +269,28 @@ let find_remaining_rack (board: game) (turn: move) (rack: char list)
   in remove_used_char (to_char_list word) subline rack
 
 
+(* Returns a head tail pair  otion of a list if it is nonempty and none
+ * otherwise
+ *    -[lst] list to be deconsed
+ *)
 let find_hd_n_tail (lst:'a list) =
   match lst with
   | [] -> None
   | x::xs -> Some (x,xs)
 
 
+(* Returns a head tail pair of a list and fails if the list passed in is empty
+ *    -[lst] list to be deconsed
+ *)
 let get_hd_n_tail (lst: 'a list) =
   match find_hd_n_tail lst with
   | None -> failwith "Player list no initialized"
   | Some x -> x
 
 
+(* Returns true if a player has an empty rack
+ *    -[plist] is the list of players in the game
+ *)
 let rec game_is_over (plist: player list) =
   match plist with
   | [] -> false
@@ -288,25 +314,25 @@ let rec init_game_players (bag: char list) : player list * char list =
         let num_players = get_player_num () in
         init_players (get_names num_players 1) bag
 
-
+(* Helper string to be printed with help command *)
 let help_string =
-"We hope you enjoy playing our Scrabble game!
-Our game recognizes the following commands:
->> Help - Opens the help menu (this thing)
->> Board - Displays the current game board
->> Score - Displays your score so far
->> Shuffle - Shuffles your current rack
->> Play word direction coordinates - Plays word in the given direction
-   starting at the given coordinates
->> Exchange tiles - Exchanges the selected tiles from your rack
->> Pass - Passes your turn
->> Quit - Ends the game
-When playing a word:
-1 - Input your the desired word
-2 - Specify the direction, either Across or Down
-3 - Specify the coordinates, first the column and then the row
-e.g. Play EXAMPLE Down H 8
-Have fun!\n"
+  "We hope you enjoy playing our Scrabble game!
+  Our game recognizes the following commands:
+  >> Help - Opens the help menu (this thing)
+  >> Board - Displays the current game board
+  >> Score - Displays your score so far
+  >> Shuffle - Shuffles your current rack
+  >> Play word direction coordinates - Plays word in the given direction
+     starting at the given coordinates
+  >> Exchange tiles - Exchanges the selected tiles from your rack
+  >> Pass - Passes your turn
+  >> Quit - Ends the game
+  When playing a word:
+  1 - Input your the desired word
+  2 - Specify the direction, either Across or Down
+  3 - Specify the coordinates, first the column and then the row
+  e.g. Play EXAMPLE Down H 8
+  Have fun!\n"
 
 let rec first_move (board: game) (bag: char list) (plist: player list)
 (show_board: bool) : game * char list * player list * bool =
@@ -393,7 +419,6 @@ let rec main (board: game) (bag: char list) (plist: player list)
         (let is_first_move = ai_flag in
                 print_string ">> It is CPU1's turn\n";
                 let ai_move = choose_word board playr.rack bag is_first_move in
-                print_string (ai_move ^ "\n");
                 match parse_string ai_move with
                 | Pass -> main board bag (tl_plist @ [playr]) true ai_flag
                 | Play x -> let word, dir, coord = x in
@@ -487,4 +512,4 @@ let () =
   let (_, _, final_plist) = main fst_board fst_bag fst_plist true is_fst_move in
   let winner = get_winner final_plist in
   print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n") (* () *)
+   " for playing!\n")
