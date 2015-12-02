@@ -411,7 +411,10 @@ let exchange_tiles tiles =
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
 
-let choose_word game rack dict bag first_move =
+
+
+let choose_word game rack bag first_move =
+  let dict = get_ospd () in
   let potential_moves = gen_move_list game rack dict in
   if first_move then
       let choices = try_tile_subsets dict (replace_wildcards rack 'E') in
@@ -419,7 +422,7 @@ let choose_word game rack dict bag first_move =
         | [] ->  "Pass "
         | hd::tl -> "Play " ^ hd ^ "Across " ^ "(H,8)"
   else
-    let f = fun x -> valid_move game x in
+    let f = fun x -> valid_word game x in
     let f2 = fun x y -> compare_scores x y game in
     let playable_moves = List.filter f potential_moves in
     let sorted_moves = List.sort_uniq f2 playable_moves in
