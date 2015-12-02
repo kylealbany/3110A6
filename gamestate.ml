@@ -17,9 +17,9 @@ let ospd = dict_init "ospd.txt"
 
 (* Initializes all the tiles of an official scrabble game *)
 let init_tiles () : char list =
-  let count = [9;2;2;4;12;2;3;2;9;1;1;4;2;6;8;2;1;6;4;6;4;2;2;1;2;1;2] in
+  let count = [9;2;2;4;12;2;3;2;9;1;1;4;2;6;8;2;1;6;4;6;4;2;2;1;2;1] in
   let alpha = ['A';'B';'C';'D';'E';'F';'G';'H';'I';'J';'K';'L';'M';'N';'O';'P';
-  'Q';'R';'S';'T';'U';'V';'W';'X';'Y';'Z';'*'] in
+  'Q';'R';'S';'T';'U';'V';'W';'X';'Y';'Z'] in
   let rec repeat n x =
     (if n = 0 then [] else x::(repeat (n-1) x)) in
   let rec iter c a =
@@ -560,6 +560,30 @@ let valid_word (board: game) (turn: move) : bool =
   (valid_extension ospd board turn) &&
   (valid_parallels ospd board turn)
 
+(* Returns true if all of the tiles the player uses that do not currently
+ * exist on the board are from the player's rack
+ *    -[board] is the game board in row major, col major form
+ *    -[turn] is the word, direction, and coordinates of the move
+ *    -[rack] is the player's rack
+ *)
+let valid_rack (board : game) (turn : move) (rack : char list) : bool =
+  let (word, dir, coord) = turn in
+  let wlist = to_char_list word in
+  let subl = get_subline board coord dir in
+  let rec valid_rack_tiles (wlst: char list) (clst: cell list) (rck: char list) (n: int) =
+    match wlst, clst with
+    | [], _ -> true
+    | w::ws , c::cs -> if n = 0 then false else
+          (match c.letter with
+          | Some a -> valid_rack_tiles ws cs rck n
+          | None ->
+              if (List.mem w rack) then
+              let remove_w = remove_elt rck w in
+              valid_rack_tiles ws cs remove_w (n-1)
+              else false)
+    | _, [] -> failwith "Invalid move - out of bounds"
+  in valid_rack_tiles wlist subl rack 7
+
 (******************************************************************************)
 (* MAIN HELPERS ***************************************************************)
 (******************************************************************************)
@@ -800,26 +824,11 @@ let rec first_move (board: game) (bag: char list) (playr: player)
       (board, new_bag, new_player)
   | Play (turn) ->
       let (word, dir, coord) = turn in
-(*       if valid_first word dir coord then
-      if valid_word board turn then
-        let wscore = word_score board turn in
-        let new_board = update_board board word coord dir in
-        let rest_rack = find_remaining_rack board turn playr.rack in
-        let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
-        let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
-        let new_rack = rest_rack @ new_tiles in
-        let new_player = {name = playr.name; score = playr.score + wscore;
-            isCPU = playr.isCPU; rack = new_rack} in
-          print_string (">> " ^ playr.name ^ " played the word " ^ word ^
-            " for " ^ (string_of_int wscore) ^ " points\n");
-        (new_board, new_bag, new_player)
-      else (print_string (">> " ^ word ^ " is not a valid word. Please try" ^
-                    " again.\n");
-            first_move board bag playr false)
-      else (print_string (">> Move is not valid. The first move must cover the" ^
-                  " center of the board. Please try again.\n");
-            first_move board bag playr false) *)
-      if not (valid_first word dir coord) then
+      if not (valid_rack board turn playr.rack) then
+        (print_string (">> Move is not valid. Some tiles used are not on " ^
+                  "your rack . Please try again.\n");
+        first_move board bag playr false)
+      else if not (valid_first word dir coord) then
         (print_string (">> Move is not valid. The first move must cover the" ^
                   " center of the board. Please try again.\n");
         first_move board bag playr false)
@@ -885,12 +894,16 @@ let rec main (board: game) (bag: char list) (plist: player list)
             main board new_bag (tl_plist @ [new_player]) true
         | Play (turn) ->
             let (word, dir, coord) = turn in
-            if not (valid_move board turn) then
+            if not (valid_rack board turn playr.rack) then
+                (print_string (">> Move is not valid. Some tiles used are not" ^
+                  " on your rack . Please try again.\n");
+                main board bag plist false)
+            else if not (valid_move board turn) then
                 (print_string ">> Move is not valid. Please try again.\n";
                 main board bag plist false)
             else if not (valid_word board turn) then
-                (print_string (">> " ^ word ^ " is not a valid word. Please try" ^
-                      " again.\n");
+                (print_string (">> " ^ word ^ " is not a valid word. Please try"
+                     ^ " again.\n");
                 main board bag plist false)
             else
               let wscore = word_score board turn in
