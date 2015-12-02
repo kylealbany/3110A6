@@ -1224,14 +1224,15 @@ let choose_word game rack dict bag first_move =
           if num_tiles < remaining_tiles && remaining_tiles >= 7
             then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
           else(*  Pass *) "Pass"
-        | hd::tl -> (* Play hd *) if !(valid_move hd) then try_moves tl
+        | hd::tl -> (* Play hd *) if not (valid_move game hd) then try_moves tl
           else
           let (word,dir,(ch,i)) = hd in
           let direction = (match dir with
                   | Across -> "Across"
                   | Down -> "Down") in
           "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
-
+        in
+      try_moves sorted_moves
 
 
 
