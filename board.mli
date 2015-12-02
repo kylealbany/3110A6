@@ -26,5 +26,3 @@ val update_board : game -> string -> char * int -> direction -> game
 
 (* Prints the current board *)
 val print_board : game -> unit
-
-
