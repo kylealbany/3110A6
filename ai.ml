@@ -199,7 +199,7 @@ let is_tile_empty tile =
   | Some x -> false
   | None -> true
 
-(* returns letter in [tile]
+(* returns letter in a [tile]
  * tile letter must not be None *)
 let extract_letter tile =
   match tile.letter with
@@ -249,6 +249,7 @@ let try_below dict tiles line =
     let first_tile_index = (List.length line) - max_len -1 in
     let first_tile = List.nth line first_tile_index in
 
+    (* entire row empty no chance of playing tile*)
     if (is_tile_empty first_tile || max_len = 0) then ([],-1)
 
     else
@@ -256,7 +257,7 @@ let try_below dict tiles line =
       if (first_tile_index-1) > 0 then
         let before_first_tile = (List.nth line (first_tile_index - 1)) in
         let before_first_empty = is_tile_empty  before_first_tile in
-
+        (* must check that tile after is empty *)
         if before_first_empty then
           let choices = try_tile_subsets dict (first_letter::tiles) in
           let filtered = List.filter
@@ -264,7 +265,7 @@ let try_below dict tiles line =
             && (x.[0] = first_letter)) choices
            in (filtered,first_tile_index)
         else ([],-1)
-
+      (* last tile on 15th cell, no need to check below it *)
       else
         let choices = try_tile_subsets dict (first_letter::tiles) in
         let filtered = List.filter
@@ -407,13 +408,23 @@ let exchange_tiles tiles =
   in
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
-let choose_word game player dict =
-  let potential_moves = gen_move_list game player dict in
-  let f = fun x -> valid_move game x in
-  let f2 = fun x y -> compare_scores x y game in
-  let playable_moves = List.filter f potential_moves in
-  let sorted_moves = List.sort_uniq f2 playable_moves in
 
-  match sorted_moves with
-  | [] -> Pass
-  | hd::tl -> Move hd
+
+
+
+
+let choose_word game player dict first_move =
+  let potential_moves = gen_move_list game player dict in
+  if first_move then
+      let choices = try_tile_subsets dict (replace_wildcards player.rack 'E') in
+        match choices with
+        | [] -> Pass
+        | hd::tl -> let col_letter = char_of_int (62) in Move (hd,Across,(col_letter,7))
+  else
+    let f = fun x -> valid_move game x in
+    let f2 = fun x y -> compare_scores x y game in
+    let playable_moves = List.filter f potential_moves in
+    let sorted_moves = List.sort_uniq f2 playable_moves in
+      match sorted_moves with
+      | [] -> Pass
+      | hd::tl -> Move hd
