@@ -16,5 +16,5 @@ val insert : dict -> key -> dict
    as input. The file should be formatted as one word per line with nothing else *)
 val dict_init : string -> dict
 
-(* Returns the Official Scrabble Player Dictionary of tye dict *)
+(* Returns the Official Scrabble Player Dictionary of type dict *)
 val get_ospd : unit -> dict

@@ -3,8 +3,7 @@ open Board
 open Move
 
 (* distribute and permutation modified from
- * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
- *)
+ * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf *)
 let distribute c l =
   let rec insert acc1 acc2 = function
     | [] -> acc2
@@ -34,7 +33,8 @@ let rec replace_wildcards chars character =
   | hd::tl -> if hd = '*' then character::(replace_wildcards tl character)
               else hd::(replace_wildcards tl character)
 
-(* convert a bytes list to a string *)
+(* [b] of byte list
+ * convert [b] to a string *)
 let blist_to_string b =
   let rec helper b str =
     match b with
@@ -44,9 +44,9 @@ let blist_to_string b =
                   helper tl new_str
   in helper b ""
 
-(* accepts a byte list and returns a string list containing the permutations *)
-(* n is the length of permutations to find. Select n random characters from s and
-   return all permutations of them of length n *)
+(* [s] of byte list
+ * [n] of int
+ * Returns a string list containing the permutations of [s] of length [n] *)
 let permutation s n =
   let rec perm s =
     match s with
@@ -58,13 +58,17 @@ let permutation s n =
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
-
+(* [s1] [s2] of string
+ * Comparison function to be used in list.sort *)
 let string_compare_helper s1 s2 =
   if (s1 = s2) then 0
   else if (s1 < s2) then -1
   else 1
 
-
+(* [dict] of dict
+ * [strings] of string list
+ * [max] [i] int
+ * Returns [max] number of strings from [strings] *)
 let rec get_i_words dict strings (max : int) (i : int)  =
   if i = max then []
   else
@@ -73,8 +77,9 @@ let rec get_i_words dict strings (max : int) (i : int)  =
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
               else get_i_words dict tl max i
 
-(* Given a list of tiles, finds a subset of length n and finds valid words from
-  all of the permutations of that subset*)
+(* [dict] of dict
+ * [chars] of char list
+ * Returns permutations of subsets of chars of length [n] *)
 let get_valid_words dict chars n =
   let strings = permutation chars n in
   (* Change search_limit to increase AI difficulty*)
@@ -82,9 +87,8 @@ let get_valid_words dict chars n =
   let words = get_i_words dict strings search_limit 0 in
   List.sort_uniq string_compare_helper words
 
-
-(* Gets the score of an individual word, not taking the board of wildcareds into
-   account at all. *)
+(* [word] of string
+ * Returns an approximationg of the word's score *)
 let get_word_score word =
     let score_ref = ref 0 in
     (score_ref := 0);
@@ -120,7 +124,8 @@ let get_word_score word =
     in
     (String.iter get_char_score word); !score_ref
 
-
+(* [word1] [word2] of string
+ * comparison function for list.sort *)
 let compare_score word1 word2 =
   let score1 = get_word_score word1 in
   let score2 = get_word_score word2 in
@@ -128,10 +133,10 @@ let compare_score word1 word2 =
     if score1=score2 then 0 else -1
   else 1
 
-(* Simple function to choose the best word to play. Uses the tile values to
-   come up with a score for each playable word, and then will return the word
-   with the highest score. Does not take into account board multipliers, wildcard
-   tiles, or other connecting words. Can improve it to increase AI difficulty *)
+(* [words] of string
+ * Simple function to choose the best word to play. Uses the tile values to
+ *  come up with a score for each playable word, and then will return the word
+ *  with the highest score. *)
 let rec choose_best_word words =
   let max_score = ref 0 in
   let best_word = ref "" in
@@ -144,9 +149,11 @@ let rec choose_best_word words =
     in
   find_best words
 
-(* Given available chars, try many different subsets of them of different lengths
-  and accumulate all of the playable words that are found.
- Increasing the upper limits of x for the loops can increase difficulty*)
+(* [dict] of dict
+ * [chars] of char list
+ * Given available chars, try many different subsets of them of different lengths
+ * and accumulate all of the playable words that are found.
+ * Increasing the upper limits of x for the loops can increase difficulty*)
 let try_tile_subsets dict chars=
   let possible_words = ref [] in
   (* Max length is 8, higher gives stack overflow finding permutations *)
@@ -173,8 +180,8 @@ let try_tile_subsets dict chars=
   done;
   List.sort_uniq compare_score !possible_words
 
-
-(* return the number of open tiles before first occupied tile in [line] *)
+(* [line] of cell list
+ * Return the number of open tiles before first occupied tile in a [line] *)
 let space_above line =
   let rec helper l count =
     match l with
@@ -184,10 +191,10 @@ let space_above line =
   let space = helper line 0 in
   if space = 15 then -1 else space
 
-(* return the number of open tiles after the last occupied tile in [line] *)
+(* [line] of cell list
+ * Return the number of open tiles after the last occupied tile in a [line] *)
 let space_below line =
    space_above (List.rev line)
-
 
 let is_tile_empty tile =
   match tile.letter with
@@ -233,7 +240,9 @@ let try_above dict tiles line =
             && (x.[(String.length x)-1] = last_letter)) choices
           in (filtered,max_len+1)
 
-(* [tiles] byte list, [line] cell list, returns a list of possible words
+(* [tiles] byte list
+ * [line] cell list
+ * returns a list of possible words formed using [tiles] and one letter in [line]
  * if space available below and last tile is isolated *)
 let try_below dict tiles line =
   let max_len = space_below line in
@@ -264,6 +273,10 @@ let try_below dict tiles line =
           && (x.[0] = first_letter)) choices
         in (filtered,first_tile_index)
 
+(* [words] of (string list * int)
+ * [dir] of direction
+ *  [col_index] of int
+ * Returns a move list of all words in col [col_index] and direction [dir]  *)
 let gen_down_move words col_index dir =
   let word_list = fst words in
   let col_letter = char_of_int (col_index + 65) in
@@ -334,7 +347,9 @@ let gen_move_list game rack dict =
 
   (!words)
 
-
+(* [move1] [move2] of move
+ * [game] of game
+ * Comparison function for list.sort *)
 let compare_scores move1 move2 game =
   let score1 = word_score game move1 in
   let score2 = word_score game move2 in
@@ -342,7 +357,7 @@ let compare_scores move1 move2 game =
   else if score1 = score2 then 0
   else 1
 
-
+(* Returns tile value of character *)
 let get_char_score character =
   match character with
   | 'A' -> 1
@@ -374,6 +389,7 @@ let get_char_score character =
   | '*' -> 0
   | _ -> failwith "Invalid character encountered in Ai.get_char_score"
 
+(* Comares tile values *)
 let compare_char_score char1 char2 =
   let score1 = get_char_score char1 in
   let score2 = get_char_score char2 in
@@ -381,14 +397,17 @@ let compare_char_score char1 char2 =
   else if score1=score2 then 0
   else 1
 
+(* [chars] of char list
+ * Returns all extra occurances of duplicate character in [chars] *)
 let rec get_duplicates chars =
   match chars with
   | [] -> []
   | hd::tl -> if List.mem hd tl then hd :: get_duplicates tl
               else get_duplicates tl
 
-(* Exchange any duplicate tiles first, and then highest valued tiles, because
-   they are the hardest to find valid words with. Want 3 total tiles to swap  *)
+(* [tiles] of char list
+ * Exchange any duplicate tiles first, and then highest valued tiles, because
+ * they are the hardest to find valid words with. Want 3 total tiles to swap  *)
 let exchange_tiles tiles =
   let duplicates = get_duplicates tiles in
   if (List.length duplicates) >= 3 then duplicates
@@ -402,7 +421,11 @@ let exchange_tiles tiles =
   in
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
-
+(* [game] of board
+ * [rack] of char list
+ * [bag] of bag
+ * [first_move] of bool
+ * Returns a string that represents a move for the AI *)
 let choose_word game rack bag first_move =
   let dict = get_ospd () in
   let potential_moves = gen_move_list game rack dict in
