@@ -1,6 +1,6 @@
 open String
-open Board
-open Dict
+(* open Board
+open Dict *)
 (* open Ai *)
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
@@ -77,7 +77,7 @@ let print_player_tiles (playr: player) : string =
   let rec create_tiles (lst: char list) =
     match lst with
     | [] -> "|\n"
-    | x::xs -> "| " ^ (Char.escaped x) ^ " " ^ (create_tiles xs) in
+    | x::xs -> "|\027[48;5;179m\027[38;5;0m " ^ (Char.escaped x) ^ " \027[0m" ^ (create_tiles xs) in
   let border = create_border n "+---" "+\n" in
   (">> " ^ playr.name ^ "'s tiles are: \n" ^ "   " ^ border ^ "   " ^
     (create_tiles clist) ^ "   " ^ border ^ "   " ^ (create_border n "====" "="))
