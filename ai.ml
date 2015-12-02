@@ -430,5 +430,4 @@ let choose_word game player dict bag first_move =
         if num_tiles > remaining_tiles
           then Exchange tiles_to_exchange
         else Pass
-
-      | hd::tl -> Play hdã²ï¼²ã²ï¼²ã²ï¼²ã²ï¼²ã²ï¼²æ íç¿
+      | hd::tl -> Play hd
