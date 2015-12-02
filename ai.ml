@@ -415,8 +415,8 @@ let choose_word game player dict bag first_move =
   if first_move then
       let choices = try_tile_subsets dict (replace_wildcards player.rack 'E') in
         match choices with
-        | [] -> Pass
-        | hd::tl -> Play (hd,Across,('H',8))
+        | [] -> (* Pass *) "Pass "
+        | hd::tl -> (* Play (hd,Across,('H',8)) *) "Play " ^ hd ^ "Across " ^ "(H,8)"
   else
     let f = fun x -> valid_move game x in
     let f2 = fun x y -> compare_scores x y game in
@@ -428,6 +428,10 @@ let choose_word game player dict bag first_move =
         let num_tiles = String.length tiles_to_exchange in
         let remaining_tiles = List.length bag in
         if num_tiles < remaining_tiles && remaining_tiles >= 7
-          then Exchange tiles_to_exchange
-        else Pass
-      | hd::tl -> Play hd
+          then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
+        else(*  Pass *) "Pass "
+      | hd::tl -> (* Play hd *)
+        match hd with
+        | (word,dir,(ch,i)) ->
+          "Play " ^ word ^ " " ^ dir ^ " " ^ (String.make 1 ch) ^ " " (string_of_int i)
+        | _ -> "Pass" (*failed*)
