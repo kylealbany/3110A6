@@ -21,15 +21,7 @@ let init_tiles () : char list =
          | x::xs, y::ys -> (repeat x y) @ (iter xs ys)
          | _, _ -> []) in
   iter count alpha
-(*
-Removes the first occurance of a character element from the character list
- *    -[c] is the character we want to remove
- *    -[clist] is the list from which we want to remove a character
 
-let rec remove_elt (clist: char list) (c: char) : char list =
-  match clist with
-  | [] -> failwith "Element not found"
-  | x::xs -> if x = c then xs else x::(remove_elt xs c) *)
 
 (* See gamestate.mli *)
 let rec gen_random_tiles (clist: char list) (n: int) : (char list) * (char list)
@@ -45,6 +37,7 @@ let rec gen_random_tiles (clist: char list) (n: int) : (char list) * (char list)
         let (chars,tiles) = (gen_random_tiles new_clist (n-1)) in
         (chars, rand_elt::tiles)
 
+
 (* Initializes players for each name in the string list. Players are initalized
  * with a score of zero. They are each given 7 random tiles from the games tile
  * pool. Returns a list of initialized players and the remaining tile pool
@@ -59,6 +52,7 @@ let rec init_players (names: string list) (all_tiles: char list)
       let (game_tiles, player_tiles) = gen_random_tiles all_tiles 7 in
       let (plist, tlist) = init_players xs game_tiles in
       ({name = x; score = 0;isCPU = false;rack = player_tiles} :: plist, tlist)
+
 
 (* Creates a string of the player's tile to be printed out
  *    -[playr] is the player whose tiles are to be displayed (whose turn it is)
@@ -76,6 +70,7 @@ let print_player_tiles (playr: player) : string =
   let border = create_border n "+---" "+\n" in
   (">> " ^ playr.name ^ "'s tiles are: \n" ^ "   " ^ border ^ "   " ^
     (create_tiles clist) ^ "   " ^ border)
+
 
 (* Returns a list of the player's tiles in a randomized order
  *    -[playr] is the player whose tiles are to be shuffled
@@ -105,6 +100,7 @@ let filer_mode (s: string) : mode =
   if filtered = "SPM" then Single else
   if filtered = "MPM" then Multi else Err
 
+
 (* Reads the user input to get the number of multiplayers.
  * postcondition: output must be a int between 2 and 4
  *)
@@ -117,6 +113,7 @@ let rec get_player_num () : int =
   if (n < 2 || n > 4) then (print_string ("\n>> Invalid player number.\n>>" ^
       " Enter a number between 2 and 4:  "); get_player_num ())
   else n
+
 
 (* Returns a list of the names of the players
  *    -[n] is the number of multiplayers (between 2 and 4)
@@ -133,18 +130,23 @@ let rec get_names (n: int) (m: int): string list =
   print_string (">> Hi " ^ filter_name);
   filter_name :: (get_names (n-1) (m+1))
 
+
 (* See gamestate.ml *)
 let get_winner (plist: player list) : player list =
   match safe_hd plist with
   | None -> failwith "No players initialized"
   | Some p ->
-(*     List.fold_right
-      (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p *)
     List.fold_left (fun acc x -> if x.score = (List.hd acc).score then acc@[x]
                     else if x.score > (List.hd acc).score then [x]
                     else acc) [p] plist
 
 
+(* Returns an int representing the first instance of element e in list lst,
+ * starting to search from index n in lst
+ *    -[lst] is the list to search
+ *    -[e] is the element the function is searching for
+ *    -[n] is the index in the list to start the search at
+ *)
 let find_from lst e n =
   let rec helper l elt i =
   match l with
@@ -155,16 +157,26 @@ let find_from lst e n =
   else (helper (nth_and_tail lst n) e 0) + n
 
 
+(* Removes consecutive instances of char c from list lst
+ *    -[lst] the char list with potential consecutive instances of c
+ *    -[c] the char to eliminate consecutive instances of from lst
+ *)
 let rec no_dup (lst: char list) (c: char) : char list =
   match lst with
   | [] -> []
   | x::[] -> [x]
-  | a::b::t -> if (a = c && b = c) then (no_dup (b::t) c) else a::(no_dup (b::t) c)
+  | a::b::t -> if (a = c && b = c) then (no_dup (b::t) c)
+               else a::(no_dup (b::t) c)
 
 
+(* Parses the string following "play " in the player's input and returns a
+ * command for processing in the repl
+ *    -[str] is what remains from the player's input after "play "
+ *)
 let play_cmd (str: string) : command =
   let str = char_list_to_string (no_dup (to_char_list (trim str)) ' ') in
-  if (List.fold_right (fun x acc -> acc + (if x = ' ' then 1 else 0)) (to_char_list str) 0) <> 3
+  if (List.fold_right
+      (fun x acc -> acc + (if x = ' ' then 1 else 0)) (to_char_list str) 0) <> 3
     then Unknown ("Invalid Play command. Enter Help to review.\n")
   else
     let end_word = find_from (to_char_list str) ' ' 0 in
@@ -183,9 +195,14 @@ let play_cmd (str: string) : command =
         match dir with
         | "Down" -> Play (word,Down,(col,row))
         | "Across" -> Play (word, Across, (col,row))
-        | _ -> Unknown ("Invalid direction in Play command. Enter Help to review\n")
+        | _ -> Unknown ("Invalid direction in Play command. Enter Help to" ^
+           " review\n")
 
 
+(* Parses the string following "exchange " in the player's input and returns a
+ * command for processing in the repl
+ *    -[str] is what remains from the player's input after "exchange "
+ *)
 let exchange_cmd (str: string) : command =
   let str = trim str in
   if find_from (to_char_list str) ' ' 0 <> -1
@@ -195,6 +212,9 @@ let exchange_cmd (str: string) : command =
   Exchange(str)
 
 
+(* Parses the player's input and returns a command for processing in the repl
+ *    -[arg] is a string of the player's input
+ *)
 let parse_string (arg: string) : command =
   let arg = trim arg in
   let space_index = find_from (to_char_list arg) ' ' 0 in
@@ -349,7 +369,6 @@ let pass_count = ref 0
 
 let rec first_move (board: game) (bag: char list) (plist: player list)
 (show_board: bool) : game * char list * player list * bool =
-(*   failwith "first_move" *)
   let (playr, tl_plist) = get_hd_n_tail plist in
   if !pass_count >= 6 then
       let new_player = {name = playr.name; score = playr.score;
@@ -393,7 +412,8 @@ let rec first_move (board: game) (bag: char list) (plist: player list)
           isCPU = playr.isCPU; rack = new_rack} in
           let (nxt_playr, _) = get_hd_n_tail tl_plist in
           if not nxt_playr.isCPU then
-            first_move board new_bag (tl_plist @ [new_player]) (not nxt_playr.isCPU)
+            (first_move board new_bag (tl_plist @ [new_player])
+              (not nxt_playr.isCPU))
           else (board, new_bag, tl_plist @ [new_player], true))
     | Play (turn) ->
         let (word, dir, coord) = turn in
@@ -429,7 +449,6 @@ let rec first_move (board: game) (bag: char list) (plist: player list)
 (* See gamestate.mli *)
 let rec main (board: game) (bag: char list) (plist: player list)
 (show_board: bool) (ai_flag: bool): game * char list * player list =
-(*   failwith "main" *)
   (* check to see if game is over - player has empty rack *)
   if (!pass_count >= 6 || game_is_over plist) then (board, bag, plist) else
   (* get the first player from the list *)
@@ -544,9 +563,9 @@ let () =
   let winner = get_winner final_plist in
   match winner with
   | [] -> print_string "oh no"
-  | hd::[] -> print_string (">> " ^ hd.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n") (* () *)
+  | hd::[] -> print_string (">> " ^ hd.name ^ " wins! Congratulations!\n>>" ^
+   " Thank you for playing!\n") (* () *)
   | hd::hd'::tl -> (print_string ">> Congratulations players \n   ");
-              (List.iter (fun x -> (print_string (x.name ^ " \n   "))) (hd'::tl));
-              (print_string "tied for first!\n")
+            (List.iter (fun x -> (print_string (x.name ^ " \n   "))) (hd'::tl));
+            (print_string "tied for first!\n")
 
