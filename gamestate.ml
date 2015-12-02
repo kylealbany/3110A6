@@ -1222,7 +1222,7 @@ let choose_word game rack dict bag first_move =
           let num_tiles = String.length tiles_to_exchange in
           let remaining_tiles = List.length bag in
           if num_tiles < remaining_tiles && remaining_tiles >= 7
-            then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
+            then (* Exchange tiles_to_exchange *) "Exchange " ^ tiles_to_exchange
           else(*  Pass *) "Pass"
         | hd::tl -> (* Play hd *) if not (valid_move game hd) then try_moves tl
           else
