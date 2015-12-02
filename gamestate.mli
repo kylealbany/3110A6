@@ -19,7 +19,6 @@ val get_winner :  player list -> player list
    on his/her rack to swap with random tiles in the bag*)
 val exchange : char list -> string -> char list -> char list * char list
 
-
 (* REPL function *)
 val main : (game -> char list -> player list -> bool -> bool ->
             game * char list * player list)
