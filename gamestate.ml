@@ -524,8 +524,10 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
     let char_list = find_assoc_clist clist line_num in
     if (List.length char_list) > 1 then
       let word_string = char_list_to_string char_list in
+      print_string (word_string ^ "\n");
+      print_string (string_of_bool (member dict word_string) ^ "\n");
       acc && (member dict word_string)
-    else true in
+    else acc in
   List.fold_right valid_each perp_lines true
 
 
@@ -888,7 +890,7 @@ let () =
   Random.self_init ();
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
     ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
-  let game_bag = init_tiles () in
+  (* let game_bag = init_tiles () in
   let (player_list, rest_bag) = init_game_players (game_bag) in
   let board = init_board () in
   let (hd_plist, tl_plist) = get_hd_n_tail player_list in
@@ -896,4 +898,4 @@ let () =
   let (_, _, final_plist) = main fst_board fst_bag (tl_plist @ [fst_player]) true in
   let winner = get_winner final_plist in
   print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n") (* () *)
+   " for playing!\n") *) ()
