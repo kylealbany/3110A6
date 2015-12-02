@@ -799,7 +799,7 @@ let rec first_move (board: game) (bag: char list) (playr: player)
       (board, new_bag, new_player)
   | Play (turn) ->
       let (word, dir, coord) = turn in
-      if valid_first word dir coord then
+(*       if valid_first word dir coord then
       if valid_word board turn then
         let wscore = word_score board turn in
         let new_board = update_board board word coord dir in
@@ -817,7 +817,27 @@ let rec first_move (board: game) (bag: char list) (playr: player)
             first_move board bag playr false)
       else (print_string (">> Move is not valid. The first move must cover the" ^
                   " center of the board. Please try again.\n");
-            first_move board bag playr false)
+            first_move board bag playr false) *)
+      if not (valid_first word dir coord) then
+        (print_string (">> Move is not valid. The first move must cover the" ^
+                  " center of the board. Please try again.\n");
+        first_move board bag playr false)
+      else if not (valid_word board turn) then
+        (print_string (">> " ^ word ^ " is not a valid word. Please try" ^
+                    " again.\n");
+        first_move board bag playr false)
+      else
+        let wscore = word_score board turn in
+        let new_board = update_board board word coord dir in
+        let rest_rack = find_remaining_rack board turn playr.rack in
+        let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
+        let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
+        let new_rack = rest_rack @ new_tiles in
+        let new_player = {name = playr.name; score = playr.score + wscore;
+            isCPU = playr.isCPU; rack = new_rack} in
+          print_string (">> " ^ playr.name ^ " played the word " ^ word ^
+            " for " ^ (string_of_int wscore) ^ " points\n");
+        (new_board, new_bag, new_player)
   | Unknown (message) -> print_string (">> " ^ message); first_move board bag playr false
 
 
@@ -864,8 +884,14 @@ let rec main (board: game) (bag: char list) (plist: player list)
             main board new_bag (tl_plist @ [new_player]) true
         | Play (turn) ->
             let (word, dir, coord) = turn in
-            if valid_move board turn then
-            if  valid_word board turn then
+            if not (valid_move board turn) then
+                (print_string ">> Move is not valid. Please try again.\n";
+                main board bag plist false)
+            else if not (valid_word board turn) then
+                (print_string (">> " ^ word ^ " is not a valid word. Please try" ^
+                      " again.\n");
+                main board bag plist false)
+            else
               let wscore = word_score board turn in
               let new_board = update_board board word coord dir in
               let rest_rack = find_remaining_rack board turn playr.rack in
@@ -877,11 +903,6 @@ let rec main (board: game) (bag: char list) (plist: player list)
               print_string (">> " ^ playr.name ^ " played the word " ^ word ^
                 " for " ^ (string_of_int wscore) ^ " points\n");
               main new_board new_bag (tl_plist @ [new_player]) true
-            else (print_string (">> " ^ word ^ " is not a valid word. Please try" ^
-                      " again.\n");
-                    main board bag plist false)
-            else (print_string ">> Move is not valid. Please try again.\n";
-                    main board bag plist false)
         | Unknown (message) -> print_string message; main board bag plist false)
 
 
@@ -890,7 +911,7 @@ let () =
   Random.self_init ();
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
     ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
-  (* let game_bag = init_tiles () in
+  let game_bag = init_tiles () in
   let (player_list, rest_bag) = init_game_players (game_bag) in
   let board = init_board () in
   let (hd_plist, tl_plist) = get_hd_n_tail player_list in
@@ -898,4 +919,4 @@ let () =
   let (_, _, final_plist) = main fst_board fst_bag (tl_plist @ [fst_player]) true in
   let winner = get_winner final_plist in
   print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n") *) ()
+   " for playing!\n") (* () *)
