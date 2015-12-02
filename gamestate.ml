@@ -134,12 +134,15 @@ let rec get_names (n: int) (m: int): string list =
   filter_name :: (get_names (n-1) (m+1))
 
 (* See gamestate.ml *)
-let get_winner (plist: player list) : player =
+let get_winner (plist: player list) : player list =
   match safe_hd plist with
   | None -> failwith "No players initialized"
   | Some p ->
-    List.fold_right
-      (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p
+(*     List.fold_right
+      (fun x acc -> if max x.score acc.score = x.score then x else acc) plist p *)
+    List.fold_left (fun acc x -> if x.score = (List.hd acc).score then acc@[x]
+                    else if x.score > (List.hd acc).score then [x]
+                    else acc) [p] plist
 
 
 let find_from lst e n =
@@ -486,5 +489,10 @@ let () =
     first_move board rest_bag player_list true in
   let (_, _, final_plist) = main fst_board fst_bag fst_plist true is_fst_move in
   let winner = get_winner final_plist in
-  print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
+  match winner with
+  | [] -> print_string "oh no"
+  | hd::[] -> print_string (">> " ^ hd.name ^ " wins! Congratulations!\n>> Thank you" ^
    " for playing!\n") (* () *)
+  | hd::hd'::tl -> (print_string ">> Congratulations players \n   ");
+              (List.iter (fun x -> (print_string (x.name ^ " \n   "))) (hd'::tl));
+              (print_string "tied for first!\n")
