@@ -17,4 +17,4 @@ val insert : dict -> key -> dict
 val dict_init : string -> dict
 
 (* Returns the Official Scrabble Player Dictionary of tye dict *)
-val init_ospd : unit -> dict
+val get_ospd : unit -> dict
