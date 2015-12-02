@@ -271,8 +271,7 @@ let find_remaining_rack (board: game) (turn: move) (rack: char list)
     | [], _ -> r
     | x::xs, c::cs -> (match c.letter with
               | None | Some '@' -> if (List.mem x r) then
-                   ( print_string ("Removing " ^ (Char.escaped x) ^ " \n");
-                                       remove_used_char xs cs (remove_elt r x))
+                    remove_used_char xs cs (remove_elt r x)
                     else failwith "Letter not on rack"
               | Some a -> remove_used_char xs cs r)
     | x::xs, _ -> failwith "Invalid move - out of bounds"
