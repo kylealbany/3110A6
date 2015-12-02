@@ -1,4 +1,6 @@
-type play = Pass | Move of move
+
+type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
+    | Exchange of string | Unknown of string
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -408,23 +410,24 @@ let exchange_tiles tiles =
   in
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
-
-
-
-
-
-let choose_word game player dict first_move =
+let choose_word game player dict bag first_move =
   let potential_moves = gen_move_list game player dict in
   if first_move then
       let choices = try_tile_subsets dict (replace_wildcards player.rack 'E') in
         match choices with
         | [] -> Pass
-        | hd::tl -> let col_letter = char_of_int (62) in Move (hd,Across,(col_letter,7))
+        | hd::tl -> Play (hd,Across,('H',8))
   else
     let f = fun x -> valid_move game x in
     let f2 = fun x y -> compare_scores x y game in
     let playable_moves = List.filter f potential_moves in
     let sorted_moves = List.sort_uniq f2 playable_moves in
       match sorted_moves with
-      | [] -> Pass
-      | hd::tl -> Move hd
+      | [] ->
+        let tiles_to_exchange = blist_to_string (exchange_tiles player.rack) in
+        let num_tiles = String.length tiles_to_exchange in
+        let remaining_tiles = List.length bag in
+        if num_tiles < remaining_tiles && remaining_tiles >= 7
+          then Exchange tiles_to_exchange
+        else Pass
+      | hd::tl -> Play hd

@@ -1,18 +1,19 @@
 open String
 open Board
-open Dict
+(* open Dict *)
 (* open Ai *)
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
 type coordinate = char * int
-type game = grid
+type cell = {letter_mult : int; word_mult : int; letter : char option}
+type direction = Down | Across
 type move = string * direction * coordinate
 type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
     | Exchange of string | Unknown of string
 type mode = Single | Multi | Err
 
 (* see gamestate.mli *)
-let ospd = dict_init "ospd.txt"
+let ospd = Dict.dict_init "ospd.txt"
 
 
 (* Initializes all the tiles of an official scrabble game *)
@@ -869,10 +870,30 @@ let rec main (board: game) (bag: char list) (plist: player list)
   let (playr, tl_plist) = get_hd_n_tail plist in
   (* determines if player is AI *)
   if playr.isCPU then
-    (print_string ">> It is CPU1's turn";
-    (*     choose_word board playr ospd *)
-        (*TODO*)
-        main board bag (tl_plist @ [playr])) true
+        (* note this will have to be passed in from somewhere *)
+        let is_first_move = false in
+        print_string ">> It is CPU1's turn";
+        let ai_move = Ai.choose_word board playr ospd bag is_first_move in
+        match ai_move with
+        | Pass -> main board bag (tl_plist @ [playr]) true
+        | Play x -> let word, dir, coord = x in
+            let wscore = word_score board x in
+            let new_board = update_board board word coord dir in
+            let rest_rack = find_remaining_rack board x playr.rack in
+            let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
+            let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
+            let new_rack = rest_rack @ new_tiles in
+            let new_player = {name = playr.name; score = playr.score + wscore;
+                isCPU = playr.isCPU; rack = new_rack} in
+            print_string (">> " ^ playr.name ^ " played the word " ^ word ^
+                " for " ^ (string_of_int wscore) ^ " points\n");
+            main new_board new_bag (tl_plist @ [new_player]) true
+        | Exchange s ->
+            let (new_rack, new_bag) = exchange playr.rack tiles bag in
+            let new_player = {name = playr.name; score = playr.score;
+            isCPU = playr.isCPU; rack = new_rack} in
+            main board new_bag (tl_plist @ [new_player]) true
+
   else
     ((if show_board then (print_board board;
                 print_string (print_player_tiles playr)) else ());
