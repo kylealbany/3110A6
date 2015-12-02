@@ -422,19 +422,17 @@ let choose_word game rack dict bag first_move =
     let f2 = fun x y -> compare_scores x y game in
     let playable_moves = List.filter f potential_moves in
     let sorted_moves = List.sort_uniq f2 playable_moves in
-      let rec try_moves sorted_moves =
-        match sorted_moves with
-        | [] ->
-          let tiles_to_exchange = blist_to_string (exchange_tiles rack) in
-          let num_tiles = String.length tiles_to_exchange in
-          let remaining_tiles = List.length bag in
-          if num_tiles < remaining_tiles && remaining_tiles >= 7
-            then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
-          else(*  Pass *) "Pass"
-        | hd::tl -> (* Play hd *) if !(valid_move hd) then try_moves tl
-          else
-          let (word,dir,(ch,i)) = hd in
-          let direction = (match dir with
+      match sorted_moves with
+      | [] ->
+        let tiles_to_exchange = blist_to_string (exchange_tiles rack) in
+        let num_tiles = String.length tiles_to_exchange in
+        let remaining_tiles = List.length bag in
+        if num_tiles < remaining_tiles && remaining_tiles >= 7
+          then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
+        else(*  Pass *) "Pass"
+      | hd::tl -> (* Play hd *)
+        let (word,dir,(ch,i)) = hd in
+        let direction = (match dir with
                   | Across -> "Across"
                   | Down -> "Down") in
-          "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
+        "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
