@@ -152,29 +152,35 @@ let find_from lst e n =
   else (helper (nth_and_tail lst n) e 0) + n
 
 
+let rec no_dup (lst: char list) (c: char) : char list =
+  match lst with
+  | [] -> []
+  | x::[] -> [x]
+  | a::b::t -> if (a = c && b = c) then (no_dup (b::t) c) else a::(no_dup (b::t) c)
+
+
 let play_cmd (str: string) : command =
-  let str = trim str in
-  let end_word = find_from (to_char_list str) ' ' 0 in
-  if end_word = -1 then
-    Unknown ("Invalid word in Play command. Enter Help to review.\n") else
-  let word = uppercase (sub str 0 end_word) in
-  let new_str = trim (sub str end_word (length str - end_word)) in
-  let end_dir = find_from (to_char_list new_str) ' ' 0 in
-  if end_dir = -1 then
-    Unknown ("Invalid direction in Play command. Enter Help to review\n") else
-  let dir = capitalize (sub new_str 0 end_dir) in
-  let coord_str = trim (sub (trim new_str) (length (trim new_str) - 4) 4) in
-  let col,row = (Char.uppercase (get coord_str 0)),
-    ((Char.code (get coord_str (length coord_str -1)) -48) +
+  let str = char_list_to_string (no_dup (to_char_list (trim str)) ' ') in
+  if (List.fold_right (fun x acc -> acc + (if x = ' ' then 1 else 0)) (to_char_list str) 0) <> 3
+    then Unknown ("Invalid Play command. Enter Help to review.\n")
+  else
+    let end_word = find_from (to_char_list str) ' ' 0 in
+    let word = uppercase (sub str 0 end_word) in
+    let new_str = trim (sub str end_word (length str - end_word)) in
+    let end_dir = find_from (to_char_list new_str) ' ' 0 in
+    let dir = capitalize (sub new_str 0 end_dir) in
+    let coord_str = trim (sub new_str (length new_str - 4) 4) in
+    let col,row = (Char.uppercase (get coord_str 0)),
+      ((Char.code (get coord_str (length coord_str -1)) -48) +
       if length coord_str = 4 then 10 else 0) in
-  (* let col,row = (Char.uppercase (get str (length str - 3))),(Char.code (get str (length str -1)) -48) in *)
-  if not (contains "ABCDEFGHIJKLMNO" col) then
-   Unknown ("Invalid column index\n") else
-  if not (row >= 1 && row <=15) then Unknown ("Invalid row index\n") else
-  match dir with
-  | "Down" -> Play (word,Down,(col,row))
-  | "Across" -> Play (word, Across, (col,row))
-  | _ -> Unknown ("Invalid direction in Play command. Enter Help to review\n")
+    if not (contains "ABCDEFGHIJKLMNO" col)
+      then Unknown ("Invalid column index\n")
+      else
+        if not (row >= 1 && row <=15) then Unknown ("Invalid row index\n") else
+        match dir with
+        | "Down" -> Play (word,Down,(col,row))
+        | "Across" -> Play (word, Across, (col,row))
+        | _ -> Unknown ("Invalid direction in Play command. Enter Help to review\n")
 
 
 let exchange_cmd (str: string) : command =
