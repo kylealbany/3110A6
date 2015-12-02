@@ -193,6 +193,14 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int)
   | _, [] -> failwith "Invalid character insertion"
 
 
+(* Creates a list of words that run perpendicular to the word being played. Sets
+ * the word multiplier of the perpendicular words to zero for scoring purposes
+ * when writing over exisitng tiles.
+ *    -[clist] is the character list of the word being played
+ *    -[subl] is the sub cell list of the row/col the word is beign played on
+ *    starting at the index where the word is being inserted
+ *    -[n] is the length of the word being played
+ *)
 let rec update_for_perp (clist: char list) (subl: cell list) (n: int)
 : cell list =
   match clist, subl with
