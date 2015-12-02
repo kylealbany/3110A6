@@ -1,7 +1,8 @@
+open Board
+
 type player = {name: string; score: int; isCPU: bool; rack: char list}
 type coordinate = char * int
-type game
-type move
+type move = string * direction * coordinate
 type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
     | Exchange of string | Unknown of string
 

@@ -1,6 +1,5 @@
 
-type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
-    | Exchange of string | Unknown of string
+type ai_command = AI_Pass | AI_Exchange of string | AI_Play of move
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -310,9 +309,9 @@ let gen_right_move words row_index dir =
  * iterate through each column and add playable words using [ai] rack
  * to a word list- returns word list
  * note the words are not necessarily playable, just valid within a column *)
-let gen_move_list game ai dict =
+let gen_move_list game rack dict =
   (* n can be changed as needed *)
-  let tiles = replace_wildcards ai.rack 'E' in
+  let tiles = replace_wildcards rack 'E' in
   let rows = fst game in
   let cols = snd game in
   let num_col = List.length cols in
@@ -410,10 +409,10 @@ let exchange_tiles tiles =
   in
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
-let choose_word game player dict bag first_move =
-  let potential_moves = gen_move_list game player dict in
+let choose_word game rack dict bag first_move =
+  let potential_moves = gen_move_list game rack dict in
   if first_move then
-      let choices = try_tile_subsets dict (replace_wildcards player.rack 'E') in
+      let choices = try_tile_subsets dict (replace_wildcards rack 'E') in
         match choices with
         | [] -> (* Pass *) "Pass "
         | hd::tl -> (* Play (hd,Across,('H',8)) *) "Play " ^ hd ^ "Across " ^ "(H,8)"
@@ -424,7 +423,7 @@ let choose_word game player dict bag first_move =
     let sorted_moves = List.sort_uniq f2 playable_moves in
       match sorted_moves with
       | [] ->
-        let tiles_to_exchange = blist_to_string (exchange_tiles player.rack) in
+        let tiles_to_exchange = blist_to_string (exchange_tiles rack) in
         let num_tiles = String.length tiles_to_exchange in
         let remaining_tiles = List.length bag in
         if num_tiles < remaining_tiles && remaining_tiles >= 7
