@@ -399,15 +399,15 @@ let valid_main_word (dict: dict) (turn: move) : bool =
 let valid_extension (dict: dict) (board: game) (turn: move) : bool =
   let word, dir, coord = turn in
   let wlist = to_char_list word in
-  let line = get_line board coord dir in
+(*   let line = get_line board coord dir in *)
   let start_indx = (if dir = Down then (snd coord)-1
       else (int_of_char (fst coord))-65) in
   let assoc_cell_list =
     update_cell_list wlist (get_line board coord dir) start_indx in
   let new_strt = find_assoc_index assoc_cell_list start_indx in
   let new_end = find_assoc_rindex assoc_cell_list start_indx in
-  if new_strt <> start_indx || new_end <> (start_indx + (List.length wlist))
-  then let exten_clist = find_assoc_clist line new_strt in
+  if new_strt <> start_indx || new_end <> (start_indx + (List.length wlist -1))
+  then let exten_clist = find_assoc_clist assoc_cell_list new_strt in
     let exten_word = char_list_to_string exten_clist in
     member dict exten_word
   else true
