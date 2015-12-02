@@ -427,7 +427,7 @@ let choose_word game player dict bag first_move =
         let tiles_to_exchange = blist_to_string (exchange_tiles player.rack) in
         let num_tiles = String.length tiles_to_exchange in
         let remaining_tiles = List.length bag in
-        if num_tiles > remaining_tiles
+        if num_tiles < remaining_tiles && remaining_tiles >= 7
           then Exchange tiles_to_exchange
         else Pass
       | hd::tl -> Play hd
