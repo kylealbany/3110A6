@@ -1,6 +1,6 @@
 open String
-open Board
-open Dict
+(* open Board
+open Dict *)
 (* open Ai *)
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
@@ -77,7 +77,7 @@ let print_player_tiles (playr: player) : string =
   let rec create_tiles (lst: char list) =
     match lst with
     | [] -> "|\n"
-    | x::xs -> "| " ^ (Char.escaped x) ^ " " ^ (create_tiles xs) in
+    | x::xs -> "|\027[48;5;179m\027[38;5;0m " ^ (Char.escaped x) ^ " \027[0m" ^ (create_tiles xs) in
   let border = create_border n "+---" "+\n" in
   (">> " ^ playr.name ^ "'s tiles are: \n" ^ "   " ^ border ^ "   " ^
     (create_tiles clist) ^ "   " ^ border ^ "   " ^ (create_border n "====" "="))
@@ -314,7 +314,6 @@ let bingo (char_lst: char list) (cell_lst: cell list) (n: int): bool =
                  | None | Some '@' -> if i = 0 then 0 else count_tiles xs (i-1)
                  | Some a -> if i = 0 then 0 else (1 + (count_tiles xs (i-1))))
   in
-  print_string (string_of_int (count_tiles cell_lst n));
   ((List.length char_lst) - (count_tiles cell_lst n)) = 7
 
 
@@ -500,7 +499,6 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
   let perp_lines =
   (if dir = Down then
       let new_cols = set assoc_cell_list line_num cols in
-      print_string ("length of new_cols is "^string_of_int (List.length new_cols)^"\n");
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_cols)
   else
       let new_rows = set assoc_cell_list line_num rows in
@@ -510,7 +508,6 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
     let char_list = find_assoc_clist clist line_num in
     if (List.length char_list) > 1 then
       let word_string = char_list_to_string char_list in
-      print_string word_string;
       acc && (member dict word_string)
     else true in
   List.fold_right valid_each perp_lines true
@@ -832,7 +829,7 @@ let rec main (board: game) (bag: char list) (plist: player list)
         | Shuffle ->
             let new_player = {name = playr.name; score = playr.score;
             isCPU = playr.isCPU; rack = shuffle_player_tiles playr} in
-            main board bag ([new_player] @ tl_plist) false
+            main board bag ([new_player] @ tl_plist) true
         | Score ->
             let msg = (">> " ^ playr.name ^ "'s score is: " ^
             (string_of_int playr.score) ^ "\n") in
@@ -871,6 +868,8 @@ let rec main (board: game) (bag: char list) (plist: player list)
 
 
 let () =
+  (* Random seed *)
+  Random.self_init ();
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
     ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
   let game_bag = init_tiles () in
