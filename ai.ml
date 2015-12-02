@@ -1,6 +1,6 @@
 open Dict
 open Board
-open Gamestate
+open Move
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -410,13 +410,14 @@ let exchange_tiles tiles =
   in
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
+
 let choose_word game rack dict bag first_move =
   let potential_moves = gen_move_list game rack dict in
   if first_move then
       let choices = try_tile_subsets dict (replace_wildcards rack 'E') in
         match choices with
-        | [] -> (* Pass *) "Pass "
-        | hd::tl -> (* Play (hd,Across,('H',8)) *) "Play " ^ hd ^ "Across " ^ "(H,8)"
+        | [] ->  "Pass "
+        | hd::tl -> "Play " ^ hd ^ "Across " ^ "(H,8)"
   else
     let f = fun x -> valid_move game x in
     let f2 = fun x y -> compare_scores x y game in
@@ -428,9 +429,9 @@ let choose_word game rack dict bag first_move =
         let num_tiles = String.length tiles_to_exchange in
         let remaining_tiles = List.length bag in
         if num_tiles < remaining_tiles && remaining_tiles >= 7
-          then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
-        else(*  Pass *) "Pass"
-      | hd::tl -> (* Play hd *)
+          then "Exchange " ^ tiles_to_exchange
+        else "Pass"
+      | hd::tl ->
         let (word,dir,(ch,i)) = hd in
         let direction = (match dir with
                   | Across -> "Across"
