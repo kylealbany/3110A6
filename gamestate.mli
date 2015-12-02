@@ -38,5 +38,5 @@ val valid_word : game -> move -> bool
 val exchange : char list -> string -> char list -> char list * char list
 
 (* REPL function *)
-val main : game -> char list -> player list -> bool -> game * char list * player list
+val main : game -> char list -> player list -> bool -> bool -> game * char list * player list
 
