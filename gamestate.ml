@@ -1,7 +1,7 @@
 open String
 open Board
 open Move
-open Dict
+(* open Dict *)
 open Ai
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
@@ -103,7 +103,7 @@ let shuffle_player_tiles (playr: player) : char list =
 let get_score (plist: player list) : unit =
   failwith "megnas score > peters score"
 
-
+(*
 
 (******************************************************************************)
 (* WORD SCORE HELPERS *********************************************************)
@@ -582,7 +582,7 @@ let valid_rack (board : game) (turn : move) (rack : char list) : bool =
               valid_rack_tiles ws cs remove_w (n-1)
               else false)
     | _, [] -> failwith "Invalid move - out of bounds"
-  in valid_rack_tiles wlist subl rack 7
+  in valid_rack_tiles wlist subl rack 7 *)
 
 (******************************************************************************)
 (* MAIN HELPERS ***************************************************************)
@@ -794,7 +794,7 @@ e.g. Play EXAMPLE Down H 8
 Have fun!\n"
 
 
-
+(*
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -1232,7 +1232,7 @@ let choose_word game rack dict bag first_move =
                   | Across -> "Across"
                   | Down -> "Down") in
         "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
-
+ *)
 
 
 

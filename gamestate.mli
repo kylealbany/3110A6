@@ -18,7 +18,7 @@ val get_winner :  player list -> player
 (* Prints out the current players score *)
 val get_score : player list -> unit
 
-(* Takes the old board and the move (word to be played, the coordinates of
+(* (* Takes the old board and the move (word to be played, the coordinates of
    the starting tile, and the direction) and returns the score to add to the
    player’s score *)
 val word_score : game -> move -> int
@@ -32,7 +32,7 @@ val valid_move : game -> move -> bool
     returns true if the word being played, any words it may extend, and any
     perpendicular words it may create are valid words according to the Official
     Scrabble Player Dictionary *)
-val valid_word : game -> move -> bool
+val valid_word : game -> move -> bool *)
 
 (* Exchanges tiles, which involves the player selecting any number of tiles
    on his/her rack to swap with random tiles in the bag*)

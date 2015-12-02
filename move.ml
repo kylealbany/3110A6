@@ -5,9 +5,6 @@ open Dict
 type coordinate = char * int
 type move = string * direction * coordinate
 
-(*
-(* see gamestate.mli *)
-let ospd = dict_init "ospd.txt" *)
 
 (* Removes the first occurance of a character element from the character list
  *    -[c] is the character we want to remove
@@ -483,6 +480,7 @@ let valid_move (board : game) (turn : move) : bool =
 
 (* See gamestate.mli *)
 let valid_word (board: game) (turn: move) : bool =
+  let ospd = get_ospd () in
   (valid_main_word ospd turn) &&
   (valid_extension ospd board turn) &&
   (valid_parallels ospd board turn)
