@@ -4,7 +4,6 @@ open Move
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
- * if we need lines we can rewrite ourselves
  *)
 let distribute c l =
   let rec insert acc1 acc2 = function
@@ -12,8 +11,9 @@ let distribute c l =
     | hd::tl -> insert (hd::acc1)((List.rev_append acc1 (hd::c::tl))::acc2) tl
   in insert [] [c::l] l
 
-(* Takes in bytes list s, and integer n. Removes random elements from s until
-   it only contains n elements.*)
+(* Takes in bytes list [s], and integer [n]
+ * Removes random elements from [s] until
+ * it only contains a max of [n] elements.*)
 let rec remove_chars s n =
   let l = List.length s in
   if l <= n then s
@@ -25,7 +25,9 @@ let rec remove_chars s n =
   in
   remove_chars (remove_char s index 0) n
 
-(* Replace wildcards in char list chars with character *)
+(* [chars] of type char list
+ * [character] of type char
+ * Replace wildcards in char list chars with character *)
 let rec replace_wildcards chars character =
   match chars with
   | [] -> []
@@ -50,11 +52,9 @@ let permutation s n =
     match s with
     | [] -> [[]]
     | hd::tl -> List.fold_left (fun acc x -> List.rev_append (distribute hd x) acc)
-      [] (perm tl)
+                  [] (perm tl)
   in
-
   let s = remove_chars s n in
-
   let blist_perm = perm s in
     List.map blist_to_string blist_perm
 
@@ -66,7 +66,8 @@ let string_compare_helper s1 s2 =
 
 
 let rec get_i_words dict strings (max : int) (i : int)  =
-  if i = max then [] else
+  if i = max then []
+  else
   match strings with
   | [] -> []
   | hd::tl -> if (member dict hd) then hd::(get_i_words dict tl max (i+1))
@@ -80,7 +81,6 @@ let get_valid_words dict chars n =
   let search_limit = 10 in
   let words = get_i_words dict strings search_limit 0 in
   List.sort_uniq string_compare_helper words
-
 
 
 (* Gets the score of an individual word, not taking the board of wildcareds into
@@ -150,12 +150,12 @@ let rec choose_best_word words =
 let try_tile_subsets dict chars=
   let possible_words = ref [] in
   (* Max length is 8, higher gives stack overflow finding permutations *)
- (*  for x = 0 to 1 do
+(*   for x = 0 to 1 do
     (possible_words := !possible_words @ (get_valid_words dict chars 8))
-  done;
+  done; *)
   for x = 0 to 2 do
     (possible_words := !possible_words @ (get_valid_words dict chars 7))
-  done; *)
+  done;
   for x = 0 to 4 do
     (possible_words := !possible_words @ (get_valid_words dict chars 6))
   done;
@@ -181,19 +181,12 @@ let space_above line =
     | [] -> count
     | hd::tl -> if hd.letter = None then helper tl (count + 1) else count
   in
-  let space = helper line 0 in if space = 15 then -1 else space
+  let space = helper line 0 in
+  if space = 15 then -1 else space
 
 (* return the number of open tiles after the last occupied tile in [line] *)
 let space_below line =
    space_above (List.rev line)
-
-(* given a tile list [tiles] return a list of each tiles letters as bytes *)
-let filter_tiles tiles =
-  let l = List.map (fun t -> t.letter) tiles in
-  let no_none =  List.filter
-  (fun t -> match t with | Some _ -> true | _ -> false) l in
-   List.map
-  (fun t -> match t with | Some x -> x | _ -> failwith "error filter") no_none
 
 
 let is_tile_empty tile =
@@ -218,8 +211,7 @@ let try_above dict tiles line =
     else
       let last_tile = List.nth line max_len in
       (* entire row empty no chance of playing tile*)
-      if (is_tile_empty last_tile || max_len = 0) then
-        ([],-1)
+      if (is_tile_empty last_tile || max_len = 0) then ([],-1)
       else
         let last_letter = extract_letter last_tile in
         (* must check that tile after is empty *)
@@ -246,14 +238,11 @@ let try_above dict tiles line =
 let try_below dict tiles line =
   let max_len = space_below line in
   if max_len = -1 then ([],-1)
-
   else
     let first_tile_index = (List.length line) - max_len -1 in
     let first_tile = List.nth line first_tile_index in
-
     (* entire row empty no chance of playing tile*)
     if (is_tile_empty first_tile || max_len = 0) then ([],-1)
-
     else
       let first_letter = extract_letter first_tile in
       if (first_tile_index-1) > 0 then
@@ -265,7 +254,7 @@ let try_below dict tiles line =
           let filtered = List.filter
             (fun x -> (String.length x <= (max_len +1))
             && (x.[0] = first_letter)) choices
-           in (filtered,first_tile_index)
+          in (filtered,first_tile_index)
         else ([],-1)
       (* last tile on 15th cell, no need to check below it *)
       else
@@ -273,21 +262,22 @@ let try_below dict tiles line =
         let filtered = List.filter
           (fun x -> (String.length x <= (max_len +1))
           && (x.[0] = first_letter)) choices
-         in (filtered,first_tile_index)
+        in (filtered,first_tile_index)
 
 let gen_down_move words col_index dir =
   let word_list = fst words in
   let col_letter = char_of_int (col_index + 65) in
   let cord = (col_letter,(snd words) + 1) in (* off by one i.e. add one more*)
   let f x = (x,dir,cord) in
-    List.map f word_list
+  List.map f word_list
 
 let gen_above_move words col_index dir =
   let word_list = fst words in
   let f x =
     let col_letter = char_of_int (col_index + 65) in
     let cord = (col_letter,(snd words) - ((String.length x) -1)) in
-      (x,dir,cord) in
+      (x,dir,cord)
+  in
   List.map f word_list
 
 let gen_left_move words row_index dir =
@@ -295,7 +285,8 @@ let gen_left_move words row_index dir =
   let f x =
     let col_letter = char_of_int ((snd words) - (String.length x) + 65) in
     let cord = (col_letter,row_index + 1) in
-    (x,dir,cord) in
+    (x,dir,cord)
+  in
   List.map f word_list
 
 let gen_right_move words row_index dir =
@@ -303,7 +294,7 @@ let gen_right_move words row_index dir =
   let col_letter = char_of_int ((snd words) + 65) in
   let cord = (col_letter,row_index + 1) in
   let f x = (x,dir,cord) in
-    List.map f word_list
+  List.map f word_list
 
 (* [ai] is a player
  * [game] is a grid of cols and rows
@@ -340,6 +331,7 @@ let gen_move_list game rack dict =
     words := (!words)@left_moves;
     words := (!words)@right_moves;
   done;
+
   (!words)
 
 
@@ -411,32 +403,30 @@ let exchange_tiles tiles =
   duplicates @ (remove_n_highest remaining_tiles num_to_remove 0)
 
 
-
-
 let choose_word game rack bag first_move =
   let dict = get_ospd () in
   let potential_moves = gen_move_list game rack dict in
   if first_move then
-      let choices = try_tile_subsets dict (replace_wildcards rack 'E') in
-        match choices with
-        | [] ->  "Pass "
-        | hd::tl -> "Play " ^ hd ^ "Across " ^ "(H,8)"
+    let choices = try_tile_subsets dict (replace_wildcards rack 'E') in
+      match choices with
+      | [] ->  "Pass "
+      | hd::tl -> "Play " ^ hd ^ " Across " ^ " H 8"
   else
     let f = fun x -> valid_word game x in
     let f2 = fun x y -> compare_scores x y game in
     let playable_moves = List.filter f potential_moves in
     let sorted_moves = List.sort_uniq f2 playable_moves in
       match sorted_moves with
-      | [] ->
-        let tiles_to_exchange = blist_to_string (exchange_tiles rack) in
-        let num_tiles = String.length tiles_to_exchange in
-        let remaining_tiles = List.length bag in
-        if num_tiles < remaining_tiles && remaining_tiles >= 7
-          then "Exchange " ^ tiles_to_exchange
-        else "Pass"
-      | hd::tl ->
-        let (word,dir,(ch,i)) = hd in
-        let direction = (match dir with
-                  | Across -> "Across"
-                  | Down -> "Down") in
-        "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
+      | [] -> let tiles_to_exchange = blist_to_string (exchange_tiles rack) in
+              let num_tiles = String.length tiles_to_exchange in
+              let remaining_tiles = List.length bag in
+              if num_tiles < remaining_tiles && remaining_tiles >= 7
+                then "Exchange " ^ tiles_to_exchange
+              else "Pass"
+      | hd::tl -> let (word,dir,(ch,i)) = hd in
+                  let direction = (match dir with
+                                    | Across -> "Across"
+                                    | Down -> "Down")
+                  in
+                  "Play " ^ word ^ " " ^ direction ^ " " ^
+                  (String.make 1 ch) ^ " " ^ (string_of_int i)

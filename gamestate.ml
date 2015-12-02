@@ -793,7 +793,7 @@ e.g. Play EXAMPLE Down H 8
 Have fun!\n"
 
 
-
+(*
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -1232,7 +1232,7 @@ let choose_word game rack dict bag first_move =
                   | Down -> "Down") in
         "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
 
-
+ *)
 
 
 let rec first_move (board: game) (bag: char list) (plist: player list)
