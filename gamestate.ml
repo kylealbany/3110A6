@@ -1,6 +1,6 @@
 open String
-(* open Board
-open Dict *)
+open Board
+open Dict
 (* open Ai *)
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
@@ -282,6 +282,19 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int)
   | _, [] -> failwith "Invalid character insertion"
 
 
+let rec update_for_perp (clist: char list) (subl: cell list) (n: int) : cell list =
+  match clist, subl with
+  | [], x -> x
+  | c::cs, s::ss ->
+    if n = 0 then
+    (match s.letter with
+        | None -> print_string "matched to none\n"; {s with letter = Some c}::update_for_perp cs ss n
+        | Some x -> print_string "matched to a letter\n"; {s with word_mult = 0}::update_for_perp cs ss n)
+    else (print_string "in else\n"; s::(update_for_perp (c::cs) ss (n-1)))
+  | _,_ -> failwith "Invalid character insertion"
+
+
+
 (* Check associated list with a letter in the word being played,
  * if the length of that associated list is > 1, then score it and add it to the
  * total score
@@ -294,6 +307,7 @@ let get_assoc_score (clist: cell list) (n: int) : int =
   if List.length assoc > 1
     then let word_score, word_mult =
       score_main assoc (nth_and_tail clist assoc_start) in
+      print_string ((string_of_int word_mult)^"\n");
       word_score * word_mult
     else 0
 
@@ -349,13 +363,15 @@ let word_score (board: game) (turn: move) : int =
     | [] -> 0
     | h::t -> get_assoc_score h n + helper t n
   in
-  (* collect words the run perpedicular to the word being played*)
+  (* collect words the run perpedicular to the word being played *)
+  let assoc_perp_list = update_for_perp wlist (get_line board coordinates dir) start_index in
   let perp_lines =
   (if dir = Down then
-      let new_cols = set assoc_cell_list line_num columns in
+      let new_cols = set assoc_perp_list line_num columns in
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_cols)
     else
-      let new_rows = set assoc_cell_list line_num rows in
+      let new_rows = set assoc_perp_list line_num rows in
+      print_string ((string_of_int (List.length new_rows))^"\n");
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let adj_score = helper perp_lines line_num in
