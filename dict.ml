@@ -31,5 +31,7 @@ let dict_init fname =
     close_in file;
     !dict
 
-let init_ospd () : dict =
-  dict_init "ospd.txt"
+let ospd = dict_init "ospd.txt"
+
+let get_ospd () : dict =
+  ospd

@@ -283,7 +283,8 @@ let rec update_cell_list (clist: char list) (subl: cell list) (n: int)
   | _, [] -> failwith "Invalid character insertion"
 
 
-let rec update_for_perp (clist: char list) (subl: cell list) (n: int) : cell list =
+let rec update_for_perp (clist: char list) (subl: cell list) (n: int)
+: cell list =
   match clist, subl with
   | [], x -> x
   | c::cs, s::ss ->
@@ -1317,7 +1318,7 @@ let rec main (board: game) (bag: char list) (plist: player list)
         (* note this will have to be passed in from somewhere *)
         (let is_first_move = ai_flag in
                 print_string ">> It is CPU1's turn\n";
-                let ai_move = choose_word board playr.rack ospd bag is_first_move in
+                let ai_move = choose_word board playr.rack bag is_first_move in
                 print_string (ai_move ^ "\n");
                 match parse_string ai_move with
                 | Pass -> main board bag (tl_plist @ [playr]) true ai_flag
@@ -1325,13 +1326,16 @@ let rec main (board: game) (bag: char list) (plist: player list)
                     let wscore = word_score board x in
                     let new_board = update_board board word coord dir in
                     let rest_rack = find_remaining_rack board x playr.rack in
-                    let n_tiles_used = (List.length playr.rack) - (List.length rest_rack) in
-                    let (new_bag, new_tiles) = gen_random_tiles bag n_tiles_used in
+                    let n_tiles_used = ((List.length playr.rack) -
+                      (List.length rest_rack)) in
+                    let (new_bag, new_tiles) =
+                      gen_random_tiles bag n_tiles_used in
                     let new_rack = rest_rack @ new_tiles in
-                    let new_player = {name = playr.name; score = playr.score + wscore;
+                    let new_player =
+                        {name = playr.name; score = playr.score + wscore;
                         isCPU = playr.isCPU; rack = new_rack} in
-                    print_string (">> " ^ playr.name ^ " played the word " ^ word ^
-                        " for " ^ (string_of_int wscore) ^ " points\n");
+                    print_string (">> " ^ playr.name ^ " played the word " ^
+                        word ^ " for " ^ (string_of_int wscore) ^ " points\n");
                     main new_board new_bag (tl_plist @ [new_player]) true false
                 | Exchange s ->
                     let (new_rack, new_bag) = exchange playr.rack s bag in
