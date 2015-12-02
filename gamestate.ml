@@ -521,7 +521,8 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
       sub_list start_index (start_index + (List.length wlist)-1) (transpose new_rows))
   in
   let valid_each (clist: cell list) (acc: bool) =
-    let char_list = find_assoc_clist clist line_num in
+    let perp_start = find_assoc_index clist line_num in
+    let char_list = find_assoc_clist clist perp_start in
     if (List.length char_list) > 1 then
       let word_string = char_list_to_string char_list in
       print_string (word_string ^ "\n");
