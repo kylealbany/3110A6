@@ -868,6 +868,8 @@ let rec main (board: game) (bag: char list) (plist: player list)
 
 
 let () =
+  (* Random seed *)
+  Random.self_init ();
   print_string ("\n>> Welcome to Scrabble!\n\n>> Would you like to play Single "
     ^ "Player Mode(SPM) or Multiplayer Mode (MPM)?\n>> Enter SPM or MPM:  ");
   let game_bag = init_tiles () in
