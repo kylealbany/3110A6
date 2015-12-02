@@ -2,7 +2,7 @@
 type cell = {letter_mult : int; word_mult : int; letter : char option}
 type rows = cell list list
 type columns = cell list list
-type grid = rows * columns
+type game = rows * columns
 type direction = Down | Across
 
 (* Returns the head of a list if the list is nonempty and None otherwise *)
@@ -22,9 +22,9 @@ val init_board : unit ->  rows * columns
 
 (* Updates the board to include the player's move of word string starting
  * at index (int, int) in direction string. Returns updated board option *)
-val update_board : grid -> string -> char * int -> direction -> grid
+val update_board : game -> string -> char * int -> direction -> game
 
 (* Prints the current board *)
-val print_board : grid -> unit
+val print_board : game -> unit
 
 

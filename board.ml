@@ -5,7 +5,7 @@ type rows = cell list list
 
 type columns = cell list list
 
-type grid = rows * columns
+type game = rows * columns
 
 type direction = Down | Across
 
