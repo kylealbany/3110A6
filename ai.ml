@@ -1,5 +1,6 @@
-
-type ai_command = AI_Pass | AI_Exchange of string | AI_Play of move
+open Dict
+open Board
+open Gamestate
 
 (* distribute and permutation modified from
  * http://www.dietabaiamonte.info/79762.html#sthash.QgjGV9wd.dpuf
@@ -428,9 +429,10 @@ let choose_word game rack dict bag first_move =
         let remaining_tiles = List.length bag in
         if num_tiles < remaining_tiles && remaining_tiles >= 7
           then (* Exchange tiles_to_exchange *) "Exchange " ^ "tiles_to_exchange"
-        else(*  Pass *) "Pass "
+        else(*  Pass *) "Pass"
       | hd::tl -> (* Play hd *)
-        match hd with
-        | (word,dir,(ch,i)) ->
-          "Play " ^ word ^ " " ^ dir ^ " " ^ (String.make 1 ch) ^ " " (string_of_int i)
-        | _ -> "Pass" (*failed*)
+        let (word,dir,(ch,i)) = hd in
+        let direction = (match dir with
+                  | Across -> "Across"
+                  | Down -> "Down") in
+        "Play " ^ word ^ " " ^ direction ^ " " ^ (String.make 1 ch) ^ " " ^ (string_of_int i)
