@@ -10,6 +10,7 @@ type move = string * direction * coordinate *)
 type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
     | Exchange of string | Unknown of string
 type mode = Single | Multi | Err
+
 (*
 (* see gamestate.mli *)
 let ospd = dict_init "ospd.txt" *)
@@ -27,15 +28,15 @@ let init_tiles () : char list =
          | x::xs, y::ys -> (repeat x y) @ (iter xs ys)
          | _, _ -> []) in
   iter count alpha
-
-(* Removes the first occurance of a character element from the character list
+(*
+Removes the first occurance of a character element from the character list
  *    -[c] is the character we want to remove
  *    -[clist] is the list from which we want to remove a character
- *)
+
 let rec remove_elt (clist: char list) (c: char) : char list =
   match clist with
   | [] -> failwith "Element not found"
-  | x::xs -> if x = c then xs else x::(remove_elt xs c)
+  | x::xs -> if x = c then xs else x::(remove_elt xs c) *)
 
 (* See gamestate.mli *)
 let rec gen_random_tiles (clist: char list) (n: int) : (char list) * (char list)

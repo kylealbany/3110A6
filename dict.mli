@@ -15,3 +15,6 @@ val insert : dict -> key -> dict
 (* Builds a radix tree dictionary when given the file name of a dictionary file
    as input. The file should be formatted as one word per line with nothing else *)
 val dict_init : string -> dict
+
+(* Returns the Official Scrabble Player Dictionary of tye dict *)
+val init_ospd : unit -> dict

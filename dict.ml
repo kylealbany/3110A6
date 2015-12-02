@@ -30,3 +30,6 @@ let dict_init fname =
   with End_of_file ->
     close_in file;
     !dict
+
+let init_ospd () : dict =
+  dict_init "ospd.txt"
