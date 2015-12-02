@@ -406,7 +406,7 @@ let valid_extension (dict: dict) (board: game) (turn: move) : bool =
     update_cell_list wlist (get_line board coord dir) start_indx in
   let new_strt = find_assoc_index assoc_cell_list start_indx in
   let new_end = find_assoc_rindex assoc_cell_list start_indx in
-  if new_strt <> start_indx || new_end <> (start_indx + (List.length wlist) -1)
+  if new_strt <> start_indx || new_end <> (start_indx + (List.length wlist))
   then let exten_clist = find_assoc_clist line new_strt in
     let exten_word = char_list_to_string exten_clist in
     member dict exten_word

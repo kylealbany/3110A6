@@ -262,7 +262,8 @@ let find_remaining_rack (board: game) (turn: move) (rack: char list)
     | [], _ -> r
     | x::xs, c::cs -> (match c.letter with
               | None | Some '@' -> if (List.mem x r) then
-                    remove_used_char xs cs (remove_elt r x)
+                   ( print_string ("Removing " ^ (Char.escaped x) ^ " \n");
+                                       remove_used_char xs cs (remove_elt r x))
                     else failwith "Letter not on rack"
               | Some a -> remove_used_char xs cs r)
     | x::xs, _ -> failwith "Invalid move - out of bounds"
@@ -509,7 +510,9 @@ let () =
   let board = init_board () in
   let (fst_board, fst_bag, fst_plist, is_fst_move) =
     first_move board rest_bag player_list true in
-  let (_, _, final_plist) = main fst_board fst_bag fst_plist true is_fst_move in
+  let (final_board, _, final_plist) =
+    main fst_board fst_bag fst_plist true is_fst_move in
   let winner = get_winner final_plist in
-  print_string (">> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
-   " for playing!\n")
+  print_board final_board;
+  print_string ("\n>> " ^ winner.name ^ " wins! Congratulations!\n>> Thank you" ^
+   " for playing!\n\n")
