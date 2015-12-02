@@ -309,7 +309,7 @@ let gen_right_move words row_index dir =
  * note the words are not necessarily playable, just valid within a column *)
 let gen_move_list game ai dict =
   (* n can be changed as needed *)
-  let tiles = replace_wildcards ai.rack 'a' in
+  let tiles = replace_wildcards ai.rack 'E' in
   let rows = fst game in
   let cols = snd game in
   let num_col = List.length cols in
