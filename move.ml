@@ -445,8 +445,6 @@ let valid_parallels (dict: dict) (board: game) (turn: move) : bool =
     let char_list = find_assoc_clist clist perp_start in
     if (List.length char_list) > 1 then
       let word_string = char_list_to_string char_list in
-      print_string (word_string ^ "\n");
-      print_string (string_of_bool (member dict word_string) ^ "\n");
       acc && (member dict word_string)
     else acc in
   List.fold_right valid_each perp_lines true
