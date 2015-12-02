@@ -576,7 +576,7 @@ let valid_rack (board : game) (turn : move) (rack : char list) : bool =
           (match c.letter with
           | Some a -> valid_rack_tiles ws cs rck n
           | None ->
-              if (List.mem w rack) then
+              if (List.mem w rck) then
               let remove_w = remove_elt rck w in
               valid_rack_tiles ws cs remove_w (n-1)
               else false)
@@ -1277,13 +1277,13 @@ let rec first_move (board: game) (bag: char list) (plist: player list)
       else (board, new_bag, tl_plist @ [new_player], true)
   | Play (turn) ->
       let (word, dir, coord) = turn in
-      if not (valid_rack board turn playr.rack) then
-        (print_string (">> Move is not valid. Some tiles used are not on " ^
-                  "your rack . Please try again.\n");
-        first_move board bag plist false)
-      else if not (valid_first word dir coord) then
+      if not (valid_first word dir coord) then
         (print_string (">> Move is not valid. The first move must cover the" ^
                   " center of the board. Please try again.\n");
+        first_move board bag plist false)
+      else if not (valid_rack board turn playr.rack) then
+        (print_string (">> Move is not valid. Some tiles used are not on " ^
+                  "your rack . Please try again.\n");
         first_move board bag plist false)
       else if not (valid_word board turn) then
         (print_string (">> At least one word formed is not a valid" ^
@@ -1368,12 +1368,12 @@ let rec main (board: game) (bag: char list) (plist: player list)
             main board new_bag (tl_plist @ [new_player]) true ai_flag
         | Play (turn) ->
             let (word, dir, coord) = turn in
-            if not (valid_rack board turn playr.rack) then
+            if not (valid_move board turn) then
+                (print_string ">> Move is not valid. Please try again.\n";
+                main board bag plist false ai_flag)
+            else if not (valid_rack board turn playr.rack) then
                 (print_string (">> Move is not valid. Some tiles used are not" ^
                   " on your rack . Please try again.\n");
-                main board bag plist false ai_flag)
-            else if not (valid_move board turn) then
-                (print_string ">> Move is not valid. Please try again.\n";
                 main board bag plist false ai_flag)
             else if not (valid_word board turn) then
                 (print_string (">> At least one word formed is not a valid" ^
