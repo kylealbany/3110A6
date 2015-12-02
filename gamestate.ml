@@ -1,19 +1,18 @@
 open String
 open Board
+open Move
 open Dict
-(* open Ai *)
+open Ai
 
 type player = {name: string; score: int; isCPU: bool; rack: char list}
-type coordinate = char * int
-(* type cell = {letter_mult : int; word_mult : int; letter : char option} *)
-(* type direction = Down | Across *)
-type move = string * direction * coordinate
+(* type coordinate = char * int
+type move = string * direction * coordinate *)
 type command = Help | Quit | Pass | Shuffle | Score | Board | Play of move
     | Exchange of string | Unknown of string
 type mode = Single | Multi | Err
-
+(*
 (* see gamestate.mli *)
-let ospd = dict_init "ospd.txt"
+let ospd = dict_init "ospd.txt" *)
 
 
 (* Initializes all the tiles of an official scrabble game *)

@@ -1,13 +1,10 @@
 
 type cell = {letter_mult : int; word_mult : int; letter : char option}
-
 type rows = cell list list
-
 type columns = cell list list
-
 type game = rows * columns
-
 type direction = Down | Across
+
 
 (** INIT BOARD HELPERS **)
 (* Returns None is lst is empty and Some head element if lst is non-empty *)
@@ -128,8 +125,10 @@ let get_type (c: cell) : string =
   | 3, 1, None -> "|\027[48;5;27m\027[38;5;0m TL \027[0m"
   | 2, 1, None -> "|\027[48;5;69m\027[38;5;0m DL \027[0m"
   | 1, 1, None -> "|\027[48;5;254m    \027[0m"
-  | 1, 2, Some a -> "|\027[48;5;219m\027[38;5;0m " ^ (Char.escaped a) ^ "  \027[0m"
-  | 1, 1, Some a -> "|\027[48;5;179m\027[38;5;0m "^ (Char.escaped a) ^"  \027[0m"
+  | 1, 2, Some a -> ("|\027[48;5;219m\027[38;5;0m " ^ (Char.escaped a) ^
+        "  \027[0m")
+  | 1, 1, Some a -> ("|\027[48;5;179m\027[38;5;0m "^ (Char.escaped a) ^
+       "  \027[0m")
   | _, _, _ -> failwith "Not valid tile"
 
 (* Builds the rows of the board with the respective multipliers and characters
