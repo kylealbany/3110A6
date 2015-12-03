@@ -136,7 +136,8 @@ let get_winner (plist: player list) : player list =
   match safe_hd plist with
   | None -> failwith "No players initialized"
   | Some p ->
-    List.fold_left (fun acc x -> if x.score = (List.hd acc).score then acc@[x]
+    List.fold_left (fun acc x -> if x.score = (List.hd acc).score
+                      && x.name <> (List.hd acc).name then acc@[x]
                     else if x.score > (List.hd acc).score then [x]
                     else acc) [p] plist
 
@@ -564,8 +565,9 @@ let () =
   match winner with
   | [] -> print_string "oh no"
   | hd::[] -> print_string (">> " ^ hd.name ^ " wins! Congratulations!\n>>" ^
-   " Thank you for playing!\n") (* () *)
+              " Thank you for playing!\n") (* () *)
   | hd::hd'::tl -> (print_string ">> Congratulations players \n   ");
-            (List.iter (fun x -> (print_string (x.name ^ " \n   "))) (hd'::tl));
-            (print_string "tied for first!\n")
+                    (List.iter
+                    (fun x -> (print_string (x.name ^ " \n   "))) (winner));
+                    (print_string "tied for first!\n")
 
